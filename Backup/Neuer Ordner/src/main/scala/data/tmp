@@ -1,0 +1,391 @@
+package data
+
+import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.parser.java15.{TokenWrapper,JavaLexer}
+import de.fosd.typechef.parser._
+import de.fosd.typechef.conditional.{One, Choice, Conditional, Opt}
+import de.fosd.typechef.parser.MultiFeatureParser
+/**
+ * Created by IntelliJ IDEA.
+ * User: kaestner
+ * Date: 13.09.11
+ * Time: 10:37
+ * To change this template use File | Settings | File Templates.
+ */
+
+class WhileParser extends MultiFeatureParser() {
+    type Elem = TokenWrapper
+    type TypeContext = Null
+
+    def start: MultiParser[List[Opt[Statement]]] = textToken("begin") ~ textToken("{") ~> program <~ textToken("}") <~ textToken("end")
+
+    def program: MultiParser[List[Opt[Statement]]] = repOpt(statement)
+
+    def statement: MultiParser[Statement] =
+          assignment      |
+          whileLoop       |
+          ifelse
+
+
+//    def assignment: MultiParser[Assignment] =
+//        identifier ~ textToken("=") ~  expression ~textToken(";") ^^ {case a~_~ b~_ => new Assignment(new IdentExpression(a),b)}
+
+    def assignment: MultiParser[Assignment] =
+        identifier ~ textToken("=") ~ identifier ~textToken(";") ^^ {case a~_~ b~_ => new Assignment(a,b)}
+
+    def whileLoop: MultiParser[WhileStatement] =
+      textToken("while")  ~ textToken("(")  ~ condition ~ textToken(")") ~ textToken("{")~ program ~ textToken("}") ^^
+        {case _~_~c~_~_~p~_ => new WhileStatement(c,new Program(p))};
+
+    def ifelse: MultiParser[Ifelse] =
+      textToken("if") ~ textToken("(") ~> condition ~ textToken(")") ~ textToken("{") ~ program ~ textToken("}") ~ textToken("else") ~ textToken("{") ~ program ~ textToken("}") ^^
+        {case c~_~_~stm~_~_~_~stmElse~_ => new Ifelse(c, new Program(stm), new Program(stmElse))}
+
+    def condition: MultiParser[Condition] =
+          conditionEquals   |
+          conditionGreater  |
+          conditionLesser    |
+          conditionGreaterOrEquals   |
+          conditionLessOrEquals
+
+    def conditionEquals: MultiParser[Condition] =
+          identifier ~ textToken("==") ~ expression  ^^ {case b~_~e  => new ConditionEquals(new IdentExpression(b), e)}
+
+    def conditionGreater: MultiParser[Condition] =
+          identifier ~ textToken(">") ~ expression  ^^ {case b~_~e  => new ConditionGreater(new IdentExpression(b), e)}
+
+    def conditionLesser: MultiParser[Condition] =
+          identifier ~ textToken("<") ~ expression  ^^ {case b~_~e  => new ConditionLesser(new IdentExpression(b), e)}
+
+    def conditionGreaterOrEquals: MultiParser[Condition] =
+        identifier ~ textToken(">=") ~ expression  ^^ {case b~_~e  => new ConditionGreaterOrEquals(new IdentExpression(b), e) }
+
+    def conditionLessOrEquals: MultiParser[Condition] =
+        identifier ~ textToken("<=") ~ expression  ^^ {case b~_~e  => new ConditionLessOrEquals(new IdentExpression(b), e)}
+
+    def expression: MultiParser[Expression] =
+       addExpression      |
+       subExpression      |
+       mulExpression      |
+       divExpression      |
+       intToken  ^^ {x => new IntExpression(x)}  |
+       identifier ^^ {x => new IdentExpression(x)}
+
+    def addExpression: MultiParser[Expression] =
+        identifier ~ textToken("+")~ expression ^^ {case b~_~e => new AddExpression(new IdentExpression(b),e)}
+
+    def subExpression: MultiParser[Expression]  =
+      identifier ~ textToken("-")~ expression ^^ {case b~_~e => new SubExpression(new IdentExpression(b),e)}
+
+    def mulExpression: MultiParser[Expression]  =
+      identifier ~ textToken("*") ~ expression ^^ {case b~_~e => new MulExpression(new IdentExpression(b),e)}
+
+    def divExpression: MultiParser[Expression]  =
+      identifier ~ textToken("/") ~ expression ^^ {case b~_~e => new DivExpression(new IdentExpression(b),e)}
+
+    def identifier: MultiParser[Conditional[Elem]] = token("identifier", x=>x.getText().matches("""[a-zA-Z]([a-zA-Z0-9]|_[a-zA-Z0-9])*""")) !
+
+    def textToken(t: String): MultiParser[Elem] =
+        token(t, _.getText == t)
+
+    def intToken : MultiParser[Conditional[Elem]] =
+        token("integer", x=>x.getText().matches("""([1-9][0-9]*)|0""")) !
+
+}
+
+class TestRunner {
+
+    import org.junit.Test
+
+    @Test
+    def run {
+        val parser=new WhileParser()
+        val x=parser.start(
+            JavaLexer.lex("""begin{
+                n=u+1;
+                if(n<=2){
+                  d=u;
+                }else{
+                  while(n>u){
+                    t=u;
+                    u=v;
+                    v=u+t;
+                  }
+                }
+             }
+             end
+             """),FeatureExpr.base)
+
+        x match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+              while(counter<10){
+                prog.calculateAEexit(prog)
+                prog.calculateAEentry(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+         //       for(stm<-prog.getBlocks){
+         //         println("Exit: "+stm.aeExit)
+         //         println("Entry: "+stm.aeEntry)
+         //       }
+                println("========================================")
+   //             val o:List[Opt[AbstractSyntaxTree]] = prog.stmList
+                //println(o.entry.b)
+              //  println(flowGraph)
+   //             for(i <- o){
+                  //Flow(i)
+   //               println(i.entry.getFlow)
+      //            println(i)
+   //            }
+                println(prog.getFlow.toString())
+//                val ae = new AvailableExpressionAnalysis
+//                ae.aeExpressionInit(prog,x)
+                println("========================================")
+
+        }
+
+
+ }
+
+  @Test
+  def run2 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+            z=a;
+            while(x>b){
+              z=z*x;
+              x=x-1;
+            }
+           }
+           end
+           """),FeatureExpr.base)
+      //println(y)
+
+            y match {
+            case parser.Success(v,_) =>
+   //           Flow(v);
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+              while(counter<10){
+                prog.calculateAEexit(prog)
+                prog.calculateAEentry(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+
+                println("========================================")
+
+     //           val o:List[Opt[Statement]] = v
+                //println(o.entry.b)
+
+
+//                val o:List[Opt[AbstractSyntaxTree]] = prog.stmList
+//                for(i <- o){
+//                  println(i.entry.getFlow)
+//                }
+                println(prog.getFlow.toString)
+                println("========================================")
+            }
+  }
+
+  @Test
+  def run3 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+            x=a+b;
+            y=a*b;
+            while(y>a+b){
+              a=a+1;
+              x=a-c;
+            }
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+
+              while(counter<10){
+                prog.calculateAEentry(prog)
+                prog.calculateAEexit(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+
+                println("========================================")
+                println(prog.getFlow.toString)
+                println("========================================")
+            }
+  }
+
+  @Test
+  def run4 {
+      val parser=new WhileParser()
+      val y=parser.start(             //Für den spezialfall funzt das nun. Tests durchführen, ob es auch für Verzweigte #if/#else funktioniert
+          JavaLexer.lex("""begin{
+              x=a+b;
+              //#if X
+              a=b+c;
+              //#else
+              a=1;
+              //#endif
+              b=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+
+              while(counter<10){
+                prog.calculateAEentry(prog)
+                prog.calculateAEexit(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+
+                println("========================================")
+                println(prog.getFlow.toString)
+                println("========================================")
+            }
+  }
+
+  @Test
+  def run5 {
+      val parser=new WhileParser()
+      val y=parser.start(            //(b=e+f-g) killt nicht a+b
+          JavaLexer.lex("""begin{
+              x=a+b;
+              //#if X
+                b=e+f-g;
+                d=5;
+              //#else
+                a=x/abc;
+                x=x+1;
+              //#endif
+              b=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+
+              while(counter<10){
+                prog.calculateAEentry(prog)
+                prog.calculateAEexit(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+
+                println("========================================")
+                println(prog.getFlow.toString)
+                println("========================================")
+            }
+  }
+
+
+  @Test
+  def run6 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              //#if X
+                x=3;
+              //#endif
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog.calculateFlowGraph()
+                prog.generateBlocks
+                prog.generateAllExpressions
+                prog.setAllExpressions(prog.allExpressions)
+                prog.stmList.head.entry.aeEntry=Set.empty     //TODO abfrage nach der init node einbinden
+                prog.genAE
+                prog.killAE(prog)
+                var counter:Int = 0
+
+              while(counter<10){
+                prog.calculateAEentry(prog)
+                prog.calculateAEexit(prog)
+                counter = counter +1
+              }
+                println(prog.getBlocks.toString)
+                println(prog.printKillGen)
+                println(prog.printAE)
+
+                println("========================================")
+                println(prog.getFlow.toString)
+                println("========================================")
+            }
+  }
+
+
+}

@@ -1,0 +1,675 @@
+package data
+
+import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.parser.java15.{TokenWrapper,JavaLexer}
+import de.fosd.typechef.parser._
+import de.fosd.typechef.conditional.{One, Choice, Conditional, Opt}
+import de.fosd.typechef.parser.MultiFeatureParser
+/**
+ * Created by IntelliJ IDEA.
+ * User: kaestner
+ * Date: 13.09.11
+ * Time: 10:37
+ * To change this template use File | Settings | File Templates.
+ */
+
+class WhileParser extends MultiFeatureParser() {
+    type Elem = TokenWrapper
+    type TypeContext = Null
+
+
+    def start: MultiParser[List[Opt[Statement]]] = textToken("begin") ~ textToken("{") ~> program <~ textToken("}") <~ textToken("end")
+
+    def program: MultiParser[List[Opt[Statement]]] = repOpt(statement)
+
+    def statement: MultiParser[Statement] =
+          assignment       |
+          whileLoop        |
+          ifelse
+
+
+    def assignment: MultiParser[Assignment] =
+       identifier ~ textToken("=") ~  expression ~textToken(";")^^ {case a~_~ b~_ => new Assignment(new IdentExpression(a.getText),b)}
+
+    def whileLoop: MultiParser[WhileStatement] =
+      textToken("while")  ~ textToken("(")  ~ condition ~ textToken(")") ~ textToken("{")~ program ~ textToken("}") ^^
+        {case _~_~c~_~_~p~_ => new WhileStatement(c,new Program(p))};
+
+    def ifelse: MultiParser[Ifelse] =
+      textToken("if") ~ textToken("(") ~> condition ~ textToken(")") ~ textToken("{") ~ program ~ textToken("}") ~ textToken("else") ~ textToken("{") ~ program ~ textToken("}") ^^
+        {case c~_~_~stm~_~_~_~stmElse~_ => new Ifelse(c, new Program(stm), new Program(stmElse))}
+
+    def condition: MultiParser[Condition] =
+          conditionEquals   |
+          conditionGreater  |
+          conditionLesser    |
+          conditionGreaterOrEquals   |
+          conditionLessOrEquals
+
+    def conditionEquals: MultiParser[Condition] =
+          identifier ~ textToken("==") ~ expression  ^^ {case b~_~e  => new ConditionEquals(new IdentExpression(b.getText), e)}
+
+    def conditionGreater: MultiParser[Condition] =
+          identifier ~ textToken(">") ~ expression  ^^ {case b~_~e  => new ConditionGreater(new IdentExpression(b.getText), e)}
+
+    def conditionLesser: MultiParser[Condition] =
+          identifier ~ textToken("<") ~ expression  ^^ {case b~_~e  => new ConditionLesser(new IdentExpression(b.getText), e)}
+
+    def conditionGreaterOrEquals: MultiParser[Condition] =
+        identifier ~ textToken(">=") ~ expression  ^^ {case b~_~e  => new ConditionGreaterOrEquals(new IdentExpression(b.getText), e) }
+
+    def conditionLessOrEquals: MultiParser[Condition] =
+        identifier ~ textToken("<=") ~ expression  ^^ {case b~_~e  => new ConditionLessOrEquals(new IdentExpression(b.getText), e)}
+
+    def expression: MultiParser[Expression] =
+       addExpression      |
+       subExpression      |
+       mulExpression      |
+       divExpression      |
+       intToken  ^^ {x => new IntExpression(x.getText)}  |
+       identifier ^^ {x => new IdentExpression(x.getText)}
+
+    def addExpression: MultiParser[Expression] =
+        identifier ~ textToken("+")~ expression ^^ {case b~_~e =>   new AddExpression(new IdentExpression(b.getText),e)}
+
+    def subExpression: MultiParser[Expression]  =
+      identifier ~ textToken("-")~ expression ^^ {case b~_~e => new SubExpression(new IdentExpression(b.getText),e)}
+
+    def mulExpression: MultiParser[Expression]  =
+      identifier ~ textToken("*") ~ expression ^^ {case b~_~e => new MulExpression(new IdentExpression(b.getText),e)}
+
+    def divExpression: MultiParser[Expression]  =
+      identifier ~ textToken("/") ~ expression ^^ {case b~_~e => new DivExpression(new IdentExpression(b.getText),e)}
+
+  def identifier: MultiParser[Elem] = token("identifier", x=>x.getText().matches("""[a-zA-Z]([a-zA-Z0-9]|_[a-zA-Z0-9])*"""))
+
+  def textToken(t: String): MultiParser[Elem] =
+      token(t, _.getText == t)
+
+  def intToken : MultiParser[Elem] =
+      token("integer", x=>x.getText().matches("""([1-9][0-9]*)|0"""))
+
+
+}
+/*
+  def start: MultiParser[List[Opt[Conditional[tmpStatement]]]] = textToken("begin") ~ textToken("{") ~> program <~ textToken("}") <~ textToken("end")
+
+  def program: MultiParser[List[Opt[Conditional[tmpStatement]]]] = repOpt(statement)
+
+
+    def statement: MultiParser[Conditional[tmpStatement]] =
+          (assignment !)      |
+          (whileLoop  !)        |
+          (ifelse !)
+
+    def assignment: MultiParser[tmpAssignment] =
+        identifier ~ textToken("=") ~ expression ~textToken(";") ^^ {case a~_~ b~_ => tmpAssignment(new tmpIdentExpression(a),b)}
+
+    def whileLoop: MultiParser[tmpWhileStatement] =
+      textToken("while")  ~ textToken("(")  ~ condition ~ textToken(")") ~ textToken("{")~ program ~ textToken("}") ^^
+        {case _~_~c~_~_~p~_ => tmpWhileStatement(c, new tmpProgram(p))};
+
+    def ifelse: MultiParser[tmpIfelse] =
+      textToken("if") ~ textToken("(") ~> condition ~ textToken(")") ~ textToken("{") ~ program ~ textToken("}") ~ textToken("else") ~ textToken("{") ~ program ~ textToken("}") ^^
+        {case c~_~_~stm~_~_~_~stmElse~_ => tmpIfelse(c, new tmpProgram(stm), new tmpProgram(stmElse))}
+
+    def condition: MultiParser[tmpCondition] =
+          conditionEquals   |
+          conditionGreater  |
+          conditionLesser    |
+          conditionGreaterOrEquals   |
+          conditionLessOrEquals
+
+    def conditionEquals: MultiParser[tmpCondition] =
+          identifier ~ textToken("==") ~ expression  ^^ {case b~_~e  => tmpConditionEquals(new tmpIdentExpression(b), e)}
+
+    def conditionGreater: MultiParser[tmpCondition] =
+          identifier ~ textToken(">") ~ expression  ^^ {case b~_~e  => tmpConditionGreater(new tmpIdentExpression(b), e)}
+
+    def conditionLesser: MultiParser[tmpCondition] =
+          identifier ~ textToken("<") ~ expression  ^^ {case b~_~e  => tmpConditionLesser(new tmpIdentExpression(b), e)}
+
+    def conditionGreaterOrEquals: MultiParser[tmpCondition] =
+        identifier ~ textToken(">=") ~ expression  ^^ {case b~_~e  => tmpConditionGreaterOrEquals(new tmpIdentExpression(b), e)}
+
+    def conditionLessOrEquals: MultiParser[tmpCondition] =
+        identifier ~ textToken("<=") ~ expression  ^^ {case b~_~e  => tmpConditionLessOrEquals(new tmpIdentExpression(b), e)}
+
+    def expression: MultiParser[tmpExpression] =
+       addExpression      |
+       subExpression      |
+       mulExpression      |
+       divExpression      |
+       intToken  ^^ {x => new tmpIntExpression(x)}  |
+       identifier ^^ {x => new tmpIdentExpression(x)}
+
+    def addExpression: MultiParser[tmpExpression] =
+        identifier ~ textToken("+")~ expression ^^ {case b~_~e => tmpAddExpression(new tmpIdentExpression(b),e)}
+
+    def subExpression: MultiParser[tmpExpression]  =
+      identifier ~ textToken("-")~ expression ^^ {case b~_~e => tmpSubExpression(new tmpIdentExpression(b),e)}
+
+    def mulExpression: MultiParser[tmpExpression]  =
+      identifier ~ textToken("*") ~ expression ^^ {case b~_~e => tmpMulExpression(new tmpIdentExpression(b),e)}
+
+    def divExpression: MultiParser[tmpExpression]  =
+      identifier ~ textToken("/") ~ expression ^^ {case b~_~e => tmpDivExpression(new tmpIdentExpression(b),e)}
+
+    def identifier: MultiParser[Conditional[Elem]] = token("identifier", x=>x.getText().matches("""[a-zA-Z]([a-zA-Z0-9]|_[a-zA-Z0-9])*""")) !
+
+    def textToken(t: String): MultiParser[Elem] =
+        token(t, _.getText == t)
+
+    def intToken : MultiParser[Conditional[Elem]] =
+        token("integer", x=>x.getText().matches("""([1-9][0-9]*)|0""")) !
+
+}
+
+
+abstract class tmpAST extends WithPosition
+case class tmpProgram(b: List[Opt[Conditional[tmpStatement]]]) extends tmpAST
+case class tmpStatement() extends tmpAST
+case class tmpCondition() extends tmpStatement
+case class tmpExpression() extends tmpStatement
+case class tmpIdentExpression(a: Conditional[TokenWrapper]) extends tmpExpression
+case class tmpIntExpression(a: Conditional[TokenWrapper]) extends tmpExpression
+case class tmpAssignment(name:tmpIdentExpression, expression:tmpExpression) extends tmpStatement
+case class tmpConditionEquals(a:tmpIdentExpression, b:tmpExpression) extends tmpCondition
+case class tmpConditionGreater(a:tmpIdentExpression, b:tmpExpression) extends tmpCondition
+case class tmpConditionGreaterOrEquals(a:tmpIdentExpression, b:tmpExpression) extends tmpCondition
+case class tmpConditionLesser(a:tmpIdentExpression, b:tmpExpression) extends tmpCondition
+case class tmpConditionLessOrEquals(a:tmpIdentExpression, b:tmpExpression) extends tmpCondition
+case class tmpAddExpression(a:tmpIdentExpression, b:tmpExpression) extends tmpExpression
+case class tmpSubExpression(a:tmpIdentExpression, b:tmpExpression) extends tmpExpression
+case class tmpMulExpression(a:tmpIdentExpression, b:tmpExpression) extends tmpExpression
+case class tmpDivExpression(a:tmpIdentExpression, b:tmpExpression) extends tmpExpression
+case class tmpIfelse(c:tmpCondition,t:tmpProgram,e:tmpProgram) extends tmpStatement
+case class tmpWhileStatement(c:tmpCondition, d:tmpProgram) extends tmpStatement
+*/
+
+class TestRunner {
+
+    import org.junit.Test
+
+    @Test
+    def run {
+        val parser=new WhileParser()
+        val x=parser.start(
+            JavaLexer.lex("""begin{
+                n=u+1;
+                if(n<=2){
+                  d=u;
+                }else{
+                  while(n>u){
+                    t=u;
+                    u=v;
+                    v=u+t;
+                  }
+                }
+                x=5;
+             }
+             end
+             """),FeatureExpr.base)
+
+        x match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+
+        }
+
+
+ }
+
+  @Test
+  def run2 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+            z=a;
+            while(x>b){
+              z=z*x;
+              x=x-1;
+            }
+           }
+           end
+           """),FeatureExpr.base)
+      //println(y)
+
+            y match {
+            case parser.Success(v,_) =>
+   //           Flow(v);
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+            }
+  }
+
+  @Test
+  def run3 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+            x=a+b;
+            y=a*b;
+            while(y>a+b){
+              a=a+1;
+              x=a-c;
+            }
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+            }
+  }
+
+  @Test
+  def run4 {
+      val parser=new WhileParser()
+      val y=parser.start(             //Für den spezialfall funzt das nun. Tests durchführen, ob es auch für Verzweigte #if/#else funktioniert
+          JavaLexer.lex("""begin{
+              x=a+b;
+              //#if X
+              if(a<3){
+                c=5;
+              }else{
+                d=5;
+              }
+              a=b+c;
+              //#else
+              a=1;
+              //#endif
+              b=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)            }
+  }
+
+  @Test
+  def run5 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              x=a+b;
+              //#if X
+                b=e+f-g;
+                d=x+1;
+              //#else
+                a=x/abc;
+                h=x+1;
+              //#endif
+              b=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+            }
+  }
+
+
+  @Test
+  def run6 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              //#if X
+                x=3;
+              //#endif
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+   //             assert(prog.printFlow.isEmpty)
+   //             assert(prog.printAE.equals("\nAss[\"x\"def(X)\"3\"def(X)] AEentry: Set() AEexit: Set(\"3\"def(X))"))
+   //             assert(prog.printKillGen.equals("\nAss[\"x\"def(X)\"3\"def(X)]Kill: Set()Gen: Set(\"3\"def(X))"))
+            }
+  }
+
+    @Test
+    def run7 {
+        val parser=new WhileParser()
+        val y=parser.start(
+            JavaLexer.lex("""begin{
+             a=b+c;
+             c=a;
+             }
+             end
+             """),FeatureExpr.base)
+
+              y match {
+
+              case parser.Success(v,_) =>
+                  val x =  new FlowGraph()
+                  var prog = new Program(v)
+                  prog=aeAnalysis(prog)
+                  output(prog)
+//                  assert(prog.printFlow.equals("(Ass[\"a\"Add[\"b\"\"c\"]],Ass[\"c\"\"a\"])\n"))
+//                  assert(prog.printAE.equals("\nAss[\"a\"Add[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Add[\"b\"\"c\"])\nAss[\"c\"\"a\"] AEentry: Set(Add[\"b\"\"c\"]) AEexit: Set(\"a\")"))
+//                  assert(prog.printKillGen.equals("\nAss[\"a\"Add[\"b\"\"c\"]]Kill: Set(\"a\")Gen: Set(Add[\"b\"\"c\"])\nAss[\"c\"\"a\"]Kill: Set(Add[\"b\"\"c\"])Gen: Set(\"a\")"))
+              }
+  }
+
+    @Test
+    def run8 {
+        val parser=new WhileParser()
+        val y=parser.start(
+            JavaLexer.lex("""begin{
+                while(x>c){
+                  a=b+c;
+                  c=c+1;
+                }
+             }
+             end
+             """),FeatureExpr.base)
+
+              y match {
+
+              case parser.Success(v,_) =>
+                  val x =  new FlowGraph()
+                  var prog = new Program(v)
+                  prog=aeAnalysis(prog)
+                  output(prog)
+//                  assert(prog.printFlow.equals("(Gr[\"x\"\"c\"],Ass[\"a\"Add[\"b\"\"c\"]])\n(Ass[\"c\"Add[\"c\"\"1\"]],Gr[\"x\"\"c\"])\n(Ass[\"a\"Add[\"b\"\"c\"]],Ass[\"c\"Add[\"c\"\"1\"]])\n"))
+//                  assert(prog.printAE.equals("\nGr[\"x\"\"c\"] AEentry: Set() AEexit: Set(\"c\")\nAss[\"a\"Add[\"b\"\"c\"]] AEentry: Set(\"c\") AEexit: Set(\"c\", Add[\"b\"\"c\"])\nAss[\"c\"Add[\"c\"\"1\"]] AEentry: Set(\"c\", Add[\"b\"\"c\"]) AEexit: Set()"))
+//                  assert(prog.printKillGen.equals("\nGr[\"x\"\"c\"]Kill: Set()Gen: Set(\"c\")\nAss[\"a\"Add[\"b\"\"c\"]]Kill: Set()Gen: Set(Add[\"b\"\"c\"])\nAss[\"c\"Add[\"c\"\"1\"]]Kill: Set(\"c\", Add[\"b\"\"c\"], Add[\"c\"\"1\"])Gen: Set()"))
+              }
+  }
+
+    @Test
+    def run9 {
+        val parser=new WhileParser()
+        val y=parser.start(
+            JavaLexer.lex("""begin{
+                if(a>b*c){
+                  b=c;
+                }else{
+                  b=a;
+                }
+                c=3;
+             }
+             end
+             """),FeatureExpr.base)
+
+              y match {
+
+              case parser.Success(v,_) =>
+                  val x =  new FlowGraph()
+                  var prog = new Program(v)
+                  prog=aeAnalysis(prog)
+                  output(prog)
+//                  assert(prog.printFlow.equals("(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"c\"])\n(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"a\"])\n(Ass[\"b\"\"c\"],Ass[\"c\"\"3\"])\n(Ass[\"b\"\"a\"],Ass[\"c\"\"3\"])\n"))
+//                  assert(prog.printAE.equals("\nGr[\"a\"Mul[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"c\")\nAss[\"b\"\"a\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"a\")\nAss[\"c\"\"3\"] AEentry: Set() AEexit: Set(\"3\")"))
+//                  assert(prog.printKillGen.equals("\nGr[\"a\"Mul[\"b\"\"c\"]]Kill: Set()Gen: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"c\")\nAss[\"b\"\"a\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"a\")\nAss[\"c\"\"3\"]Kill: Set(Mul[\"b\"\"c\"], \"c\")Gen: Set(\"3\")"))
+              }
+  }
+
+  @Test
+  def run10 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              if(a>e){
+                c=a+b;
+              }else{
+                c=a+b;
+              }
+              d=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+                assert(prog.printFlow.equals("(Gr[a,e],Ass[c,Add[a,b]])\n(Gr[a,e],Ass[c,Add[a,b]])\n(Ass[c,Add[a,b]],Ass[d,c])\n(Ass[c,Add[a,b]],Ass[d,c])\n"))
+                assert(prog.printAE.equals("\nGr[a,e] AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]] AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]] AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c] AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))
+                assert(prog.printKillGen.equals("\nGr[a,e]Kill: Set()Gen: Set(e)\nAss[c,Add[a,b]]Kill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]Kill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]Kill: Set()Gen: Set(c)"))
+            }
+}
+
+
+  @Test
+  def run11 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              //#if x
+                c=a+b;
+              //#else
+                c=a+b;
+              //#endif
+              d=c;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+//                assert(prog.printFlow.equals("(Ass[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]],Ass[\"d\"\"c\"])\n(Ass[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]],Ass[\"d\"\"c\"])\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]] AEentry: Set() AEexit: Set(Add[\"a\"def(x)\"b\"def(x)])\nAss[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]] AEentry: Set() AEexit: Set(Add[\"a\"!def(x)\"b\"!def(x)])\nAss[\"d\"\"c\"] AEentry: Set(Add[\"a\"!def(x)\"b\"!def(x)]) AEexit: Set(Add[\"a\"!def(x)\"b\"!def(x)], \"c\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]]Kill: Set(\"c\")Gen: Set(Add[\"a\"def(x)\"b\"def(x)])\nAss[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]]Kill: Set(\"c\")Gen: Set(Add[\"a\"!def(x)\"b\"!def(x)])\nAss[\"d\"\"c\"]Kill: Set()Gen: Set(\"c\")"))
+            }
+}
+
+
+  @Test
+  def run12 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+                c=d*f/abc;
+                d=1;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+                assert(prog.printFlow.equals("(Ass[c,Mul[d,Div[f,abc]]],Ass[d,1])\n"))
+                assert(prog.printAE.equals("\nAss[c,Mul[d,Div[f,abc]]] AEentry: Set() AEexit: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1] AEentry: Set(Div[f,abc], Mul[d,Div[f,abc]]) AEexit: Set(Div[f,abc], 1)"))
+                assert(prog.printKillGen.equals("\nAss[c,Mul[d,Div[f,abc]]]Kill: Set()Gen: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]Kill: Set(Mul[d,Div[f,abc]])Gen: Set(1)"))
+            }
+}
+
+  @Test
+  def run13 {
+
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              a=b+c;
+              //#if X
+                if(a<b){
+                  f=5;
+                }else{
+                  g=6;
+                }
+                w=20;
+              //#endif
+              e=z;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
+            }
+}
+
+
+  @Test
+  def run14 {
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              a=b+c;
+              //#if X
+                if(a<b){
+                  //#if Y
+                    f=5;
+                    while(d<x){
+                      h=x+y;
+                      g=b-c;
+                      //#if J
+                      b=f+x
+                      //#if K
+                      -bla;
+                      //#else
+                      +bla;
+                        //#if T
+                          f=x;
+                        //#endif
+                      //#endif
+                    //#endif
+                    }
+                  //#endif
+                }else{
+                  g=6;
+                }
+                w=20;
+              //#endif
+              e=z;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+//                assert(prog.printFlow.equals("(Le[a,b],Ass[g,6])\n(Ass[g,6],Ass[w,20])\n(Ass[a,Add[b,c]],Le[a,b])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[f,5],Ass[w,20])\n=========FLOW-END=======\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
+            }
+}
+
+
+  @Test
+  def run15 {
+
+      val parser=new WhileParser()
+      val y=parser.start(
+          JavaLexer.lex("""begin{
+              a=b+c;
+              //#if X
+                if(a<b){
+                //#if H
+                  f=5;
+                  f=f+1;
+                //#else
+                  f=6;
+                //#endif
+                }else{
+                  g=6;
+                }
+                w=20;
+              //#endif
+              e=z;
+           }
+           end
+           """),FeatureExpr.base)
+
+            y match {
+
+            case parser.Success(v,_) =>
+                val x =  new FlowGraph()
+                var prog = new Program(v)
+                prog=aeAnalysis(prog)
+                output(prog)
+//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
+            }
+}
+
+
+
+  def aeAnalysis(prog:Program):Program = {
+    prog.setFeatures
+    prog.calculateFlowGraph()
+    prog.generateBlocks
+    prog.generateAllExpressions
+    prog.setAllExpressions(prog.allExpressions)
+    prog.stmList.head.entry.label.aeEntry=Set.empty
+    prog.genAE
+    prog.killAE(prog)
+    var counter:Int = 0
+
+    while(counter<10){
+      prog.calculateAEentry(prog)
+      prog.calculateAEexit(prog)
+      counter = counter +1
+    }
+    return prog
+  }
+
+  def output(prog:Program){
+    println("=========BLOCKS=========")
+    println(prog.getBlocks.toString)
+    println("=========BLOCKS-END=========")
+    print("=========KILL-GEN=========")
+    println(prog.printKillGen)
+    println("=========KILL-GEN-END=========")
+    print("=========AE=========")
+    println(prog.printAE)
+    println("=========AE-END=========")
+    println("=========FLOW=========")
+    print(prog.printFlow)
+    println("=========FLOW-END=========")
+  }
+}
