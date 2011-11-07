@@ -62,7 +62,7 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
 */
 
     var oldStm:AbstractSyntaxTree = null
-   // var oldDefStm:Opt[AbstractSyntaxTree] = null    //zwei old Opt Knoten, da der unäre Operator abweichen kann
+    var oldDefStmElse:Opt[AbstractSyntaxTree] = null    //zwei old Opt Knoten für then/else branch
     var oldDefStmThen:Opt[AbstractSyntaxTree] = null
     setInitNodes(calculateInitNodes)
     setExitNodes(calculateExitNodes)
@@ -84,6 +84,10 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
                  addFlow(oldDefStmThen.entry,stm.entry.getLabel)                    //Kante vom letzten Knoten des Opt-thenBranchs zum nächsten normalen Knoten
                  oldDefStmThen = null
                }
+               if(oldDefStmElse!=null){
+                 addFlow(oldDefStmElse.entry, stm.entry.getLabel)
+                 oldDefStmElse = null
+               }
               /*
                if(oldDefStm!=null){
                  addFlow(oldDefStm.entry, stm.entry.getLabel)
@@ -99,8 +103,14 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
               }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
                 if(oldStm != null)
                   addFlow(oldStm, stm.entry.getLabel)
+                if(oldDefStmElse != null && oldDefStmElse.feature.equivalentTo(stm.feature))           //ElseBranch
+                  addFlow(oldDefStmElse.entry, stm.entry.getLabel)
               }
-              oldDefStmThen = stm   //.getLabel              //das Label von IfElse ist Condition und damit nicht der Knoten von dem die Kante ausgehen soll
+              if(oldDefStmThen != null && !oldDefStmThen.feature.and(stm.feature).isSatisfiable()){
+                oldDefStmElse = stm
+              }else{
+                oldDefStmThen = stm   //.getLabel              //das Label von IfElse ist Condition und damit nicht der Knoten von dem die Kante ausgehen soll
+              }
               addSubFlow(stm.entry.getFlow)
             }
 

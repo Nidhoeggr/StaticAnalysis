@@ -191,11 +191,10 @@ class TestRunner {
 
     import org.junit.Test
 
+
     @Test
     def run {
-        val parser=new WhileParser()
-        val x=parser.start(
-            JavaLexer.lex("""begin{
+       val code = """begin{
                 n=u+1;
                 if(n<=2){
                   d=u;
@@ -209,25 +208,16 @@ class TestRunner {
                 x=5;
              }
              end
-             """),FeatureExpr.base)
+             """
 
-        x match {
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-
-        }
+           val prog:Program = runTest(code)
 
 
  }
 
   @Test
   def run2 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+     val code = """begin{
             z=a;
             while(x>b){
               z=z*x;
@@ -235,24 +225,14 @@ class TestRunner {
             }
            }
            end
-           """),FeatureExpr.base)
-      //println(y)
+           """
 
-            y match {
-            case parser.Success(v,_) =>
-   //           Flow(v);
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-            }
+            val prog:Program = runTest(code)
   }
 
   @Test
   def run3 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
             x=a+b;
             y=a*b;
             while(y>a+b){
@@ -261,22 +241,14 @@ class TestRunner {
             }
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-            }
+           val prog:Program = runTest(code)
   }
 
   @Test
   def run4 {
-      val parser=new WhileParser()
-      val y=parser.start(             //Für den spezialfall funzt das nun. Tests durchführen, ob es auch für Verzweigte #if/#else funktioniert
-          JavaLexer.lex("""begin{
+      val code = """begin{
               x=a+b;
               //#if X
               if(a<3){
@@ -291,21 +263,14 @@ class TestRunner {
               b=c;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)            }
+           val prog:Program = runTest(code)
   }
 
   @Test
   def run5 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
               x=a+b;
               //#if X
                 b=e+f-g;
@@ -317,99 +282,66 @@ class TestRunner {
               b=c;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
-
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-            }
+           val prog:Program = runTest(code)
   }
 
 
   @Test
   def run6 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+     val code = """begin{
               //#if X
                 x=3;
               //#endif
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
+           val prog:Program = runTest(code)
+                assert(prog.printFlow.isEmpty)
+                assert(prog.printAE.equals("\nAss[x,3]def(X) AEentry: Set() AEexit: Set(3)"))
+                assert(prog.printKillGen.equals("\nAss[x,3]def(X)Kill: Set()Gen: Set(3)"))
 
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-   //             assert(prog.printFlow.isEmpty)
-   //             assert(prog.printAE.equals("\nAss[\"x\"def(X)\"3\"def(X)] AEentry: Set() AEexit: Set(\"3\"def(X))"))
-   //             assert(prog.printKillGen.equals("\nAss[\"x\"def(X)\"3\"def(X)]Kill: Set()Gen: Set(\"3\"def(X))"))
-            }
   }
 
     @Test
     def run7 {
-        val parser=new WhileParser()
-        val y=parser.start(
-            JavaLexer.lex("""begin{
+        val code = """begin{
              a=b+c;
              c=a;
              }
              end
-             """),FeatureExpr.base)
+             """
 
-              y match {
+           val prog:Program = runTest(code)
+                  assert(prog.printFlow.equals("(Ass[a,Add[b,c]]True,Ass[c,a]True)\n"))
+                  assert(prog.printAE.equals("\nAss[a,Add[b,c]]True AEentry: Set() AEexit: Set(Add[b,c])\nAss[c,a]True AEentry: Set(Add[b,c]) AEexit: Set(a)"))
+                  assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]TrueKill: Set(a)Gen: Set(Add[b,c])\nAss[c,a]TrueKill: Set(Add[b,c])Gen: Set(a)"))
 
-              case parser.Success(v,_) =>
-                  val x =  new FlowGraph()
-                  var prog = new Program(v)
-                  prog=aeAnalysis(prog)
-                  output(prog)
-//                  assert(prog.printFlow.equals("(Ass[\"a\"Add[\"b\"\"c\"]],Ass[\"c\"\"a\"])\n"))
-//                  assert(prog.printAE.equals("\nAss[\"a\"Add[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Add[\"b\"\"c\"])\nAss[\"c\"\"a\"] AEentry: Set(Add[\"b\"\"c\"]) AEexit: Set(\"a\")"))
-//                  assert(prog.printKillGen.equals("\nAss[\"a\"Add[\"b\"\"c\"]]Kill: Set(\"a\")Gen: Set(Add[\"b\"\"c\"])\nAss[\"c\"\"a\"]Kill: Set(Add[\"b\"\"c\"])Gen: Set(\"a\")"))
-              }
   }
 
     @Test
     def run8 {
-        val parser=new WhileParser()
-        val y=parser.start(
-            JavaLexer.lex("""begin{
+        val code = """begin{
                 while(x>c){
                   a=b+c;
                   c=c+1;
                 }
              }
              end
-             """),FeatureExpr.base)
+             """
 
-              y match {
+           val prog:Program = runTest(code)
+                  assert(prog.printFlow.equals("(Gr[x,c]True,Ass[a,Add[b,c]]True)\n(Ass[c,Add[c,1]]True,Gr[x,c]True)\n(Ass[a,Add[b,c]]True,Ass[c,Add[c,1]]True)\n"))
+                  assert(prog.printAE.equals("\nGr[x,c]True AEentry: Set() AEexit: Set(c)\nAss[a,Add[b,c]]True AEentry: Set(c) AEexit: Set(c, Add[b,c])\nAss[c,Add[c,1]]True AEentry: Set(c, Add[b,c]) AEexit: Set()"))
+                  assert(prog.printKillGen.equals("\nGr[x,c]TrueKill: Set()Gen: Set(c)\nAss[a,Add[b,c]]TrueKill: Set()Gen: Set(Add[b,c])\nAss[c,Add[c,1]]TrueKill: Set(c, Add[b,c], Add[c,1])Gen: Set()"))
 
-              case parser.Success(v,_) =>
-                  val x =  new FlowGraph()
-                  var prog = new Program(v)
-                  prog=aeAnalysis(prog)
-                  output(prog)
-//                  assert(prog.printFlow.equals("(Gr[\"x\"\"c\"],Ass[\"a\"Add[\"b\"\"c\"]])\n(Ass[\"c\"Add[\"c\"\"1\"]],Gr[\"x\"\"c\"])\n(Ass[\"a\"Add[\"b\"\"c\"]],Ass[\"c\"Add[\"c\"\"1\"]])\n"))
-//                  assert(prog.printAE.equals("\nGr[\"x\"\"c\"] AEentry: Set() AEexit: Set(\"c\")\nAss[\"a\"Add[\"b\"\"c\"]] AEentry: Set(\"c\") AEexit: Set(\"c\", Add[\"b\"\"c\"])\nAss[\"c\"Add[\"c\"\"1\"]] AEentry: Set(\"c\", Add[\"b\"\"c\"]) AEexit: Set()"))
-//                  assert(prog.printKillGen.equals("\nGr[\"x\"\"c\"]Kill: Set()Gen: Set(\"c\")\nAss[\"a\"Add[\"b\"\"c\"]]Kill: Set()Gen: Set(Add[\"b\"\"c\"])\nAss[\"c\"Add[\"c\"\"1\"]]Kill: Set(\"c\", Add[\"b\"\"c\"], Add[\"c\"\"1\"])Gen: Set()"))
-              }
   }
 
     @Test
     def run9 {
-        val parser=new WhileParser()
-        val y=parser.start(
-            JavaLexer.lex("""begin{
+       val code = """begin{
                 if(a>b*c){
                   b=c;
                 }else{
@@ -418,26 +350,18 @@ class TestRunner {
                 c=3;
              }
              end
-             """),FeatureExpr.base)
+             """
 
-              y match {
+           val prog:Program = runTest(code)
+  //                assert(prog.printFlow.equals("(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"c\"])\n(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"a\"])\n(Ass[\"b\"\"c\"],Ass[\"c\"\"3\"])\n(Ass[\"b\"\"a\"],Ass[\"c\"\"3\"])\n"))
+  //                assert(prog.printAE.equals("\nGr[\"a\"Mul[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"c\")\nAss[\"b\"\"a\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"a\")\nAss[\"c\"\"3\"] AEentry: Set() AEexit: Set(\"3\")"))
+  //                assert(prog.printKillGen.equals("\nGr[\"a\"Mul[\"b\"\"c\"]]Kill: Set()Gen: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"c\")\nAss[\"b\"\"a\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"a\")\nAss[\"c\"\"3\"]Kill: Set(Mul[\"b\"\"c\"], \"c\")Gen: Set(\"3\")"))
 
-              case parser.Success(v,_) =>
-                  val x =  new FlowGraph()
-                  var prog = new Program(v)
-                  prog=aeAnalysis(prog)
-                  output(prog)
-//                  assert(prog.printFlow.equals("(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"c\"])\n(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"a\"])\n(Ass[\"b\"\"c\"],Ass[\"c\"\"3\"])\n(Ass[\"b\"\"a\"],Ass[\"c\"\"3\"])\n"))
-//                  assert(prog.printAE.equals("\nGr[\"a\"Mul[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"c\")\nAss[\"b\"\"a\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"a\")\nAss[\"c\"\"3\"] AEentry: Set() AEexit: Set(\"3\")"))
-//                  assert(prog.printKillGen.equals("\nGr[\"a\"Mul[\"b\"\"c\"]]Kill: Set()Gen: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"c\")\nAss[\"b\"\"a\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"a\")\nAss[\"c\"\"3\"]Kill: Set(Mul[\"b\"\"c\"], \"c\")Gen: Set(\"3\")"))
-              }
   }
 
   @Test
   def run10 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
               if(a>e){
                 c=a+b;
               }else{
@@ -446,81 +370,57 @@ class TestRunner {
               d=c;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
+            val prog:Program = runTest(code)
+                assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
+                assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))               //TODO
+                assert(prog.printKillGen.equals("\nGr[a,e]TrueKill: Set()Gen: Set(e)\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
 
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-                assert(prog.printFlow.equals("(Gr[a,e],Ass[c,Add[a,b]])\n(Gr[a,e],Ass[c,Add[a,b]])\n(Ass[c,Add[a,b]],Ass[d,c])\n(Ass[c,Add[a,b]],Ass[d,c])\n"))
-                assert(prog.printAE.equals("\nGr[a,e] AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]] AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]] AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c] AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))
-                assert(prog.printKillGen.equals("\nGr[a,e]Kill: Set()Gen: Set(e)\nAss[c,Add[a,b]]Kill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]Kill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]Kill: Set()Gen: Set(c)"))
-            }
 }
 
 
   @Test
   def run11 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
               //#if x
-                c=a+b;
+                c=a-b;
               //#else
                 c=a+b;
               //#endif
               d=c;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
+            val prog:Program = runTest(code)
+                assert(prog.printFlow.equals("(Ass[c,Sub[a,b]]def(x),Ass[d,c]True)\n(Ass[c,Add[a,b]]!def(x),Ass[d,c]True)\n"))
+                assert(prog.printAE.equals("\nAss[c,Sub[a,b]]def(x) AEentry: Set() AEexit: Set(Sub[a,b])\nAss[c,Add[a,b]]!def(x) AEentry: Set() AEexit: Set(Add[a,b])\nAss[d,c]True AEentry: Set(Add[a,b], Sub[a,b]) AEexit: Set(Add[a,b], Sub[a,b], c)"))
+                assert(prog.printKillGen.equals("\nAss[c,Sub[a,b]]def(x)Kill: Set(c)Gen: Set(Sub[a,b])\nAss[c,Add[a,b]]!def(x)Kill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
 
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-//                assert(prog.printFlow.equals("(Ass[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]],Ass[\"d\"\"c\"])\n(Ass[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]],Ass[\"d\"\"c\"])\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]] AEentry: Set() AEexit: Set(Add[\"a\"def(x)\"b\"def(x)])\nAss[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]] AEentry: Set() AEexit: Set(Add[\"a\"!def(x)\"b\"!def(x)])\nAss[\"d\"\"c\"] AEentry: Set(Add[\"a\"!def(x)\"b\"!def(x)]) AEexit: Set(Add[\"a\"!def(x)\"b\"!def(x)], \"c\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"def(x)Add[\"a\"def(x)\"b\"def(x)]]Kill: Set(\"c\")Gen: Set(Add[\"a\"def(x)\"b\"def(x)])\nAss[\"c\"!def(x)Add[\"a\"!def(x)\"b\"!def(x)]]Kill: Set(\"c\")Gen: Set(Add[\"a\"!def(x)\"b\"!def(x)])\nAss[\"d\"\"c\"]Kill: Set()Gen: Set(\"c\")"))
-            }
 }
 
 
   @Test
   def run12 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
                 c=d*f/abc;
                 d=1;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
+            val prog:Program = runTest(code)
+                assert(prog.printFlow.equals("(Ass[c,Mul[d,Div[f,abc]]]True,Ass[d,1]True)\n"))
+                assert(prog.printAE.equals("\nAss[c,Mul[d,Div[f,abc]]]True AEentry: Set() AEexit: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]True AEentry: Set(Div[f,abc], Mul[d,Div[f,abc]]) AEexit: Set(Div[f,abc], 1)"))
+                assert(prog.printKillGen.equals("\nAss[c,Mul[d,Div[f,abc]]]TrueKill: Set()Gen: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]TrueKill: Set(Mul[d,Div[f,abc]])Gen: Set(1)"))
 
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
-                assert(prog.printFlow.equals("(Ass[c,Mul[d,Div[f,abc]]],Ass[d,1])\n"))
-                assert(prog.printAE.equals("\nAss[c,Mul[d,Div[f,abc]]] AEentry: Set() AEexit: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1] AEentry: Set(Div[f,abc], Mul[d,Div[f,abc]]) AEexit: Set(Div[f,abc], 1)"))
-                assert(prog.printKillGen.equals("\nAss[c,Mul[d,Div[f,abc]]]Kill: Set()Gen: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]Kill: Set(Mul[d,Div[f,abc]])Gen: Set(1)"))
-            }
 }
 
   @Test
   def run13 {
 
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
               a=b+c;
               //#if X
                 if(a<b){
@@ -533,27 +433,19 @@ class TestRunner {
               e=z;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
-
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
+           val prog:Program = runTest(code)
 //                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
 //                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
 //                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
-            }
+
 }
 
 
   @Test
   def run14 {
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+      val code = """begin{
               a=b+c;
               //#if X
                 if(a<b){
@@ -563,16 +455,13 @@ class TestRunner {
                       h=x+y;
                       g=b-c;
                       //#if J
-                      b=f+x
-                      //#if K
-                      -bla;
+                        b=f+x-bla;
                       //#else
-                      +bla;
+                        b=f+x+bla;
                         //#if T
                           f=x;
                         //#endif
                       //#endif
-                    //#endif
                     }
                   //#endif
                 }else{
@@ -583,28 +472,20 @@ class TestRunner {
               e=z;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
-
-            case parser.Success(v,_) =>
-                val x =  new FlowGraph()
-                var prog = new Program(v)
-                prog=aeAnalysis(prog)
-                output(prog)
+            val prog:Program = runTest(code)
 //                assert(prog.printFlow.equals("(Le[a,b],Ass[g,6])\n(Ass[g,6],Ass[w,20])\n(Ass[a,Add[b,c]],Le[a,b])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[f,5],Ass[w,20])\n=========FLOW-END=======\n"))
 //                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
 //                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
-            }
+
 }
 
 
   @Test
   def run15 {
 
-      val parser=new WhileParser()
-      val y=parser.start(
-          JavaLexer.lex("""begin{
+  val code = """begin{
               a=b+c;
               //#if X
                 if(a<b){
@@ -622,22 +503,33 @@ class TestRunner {
               e=z;
            }
            end
-           """),FeatureExpr.base)
+           """
 
-            y match {
+            runTest(code)
+//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
 
+}
+
+
+
+  def runTest(code:String):Program =  {
+          val parser=new WhileParser()
+          val y=parser.start(
+          JavaLexer.lex(code),FeatureExpr.base)
+            y match{
             case parser.Success(v,_) =>
                 val x =  new FlowGraph()
                 var prog = new Program(v)
                 prog=aeAnalysis(prog)
                 output(prog)
-//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
-            }
-}
+                return prog
+            case _ => return null
+             }
 
 
+  }
 
   def aeAnalysis(prog:Program):Program = {
     prog.setFeatures
