@@ -1,6 +1,7 @@
 package data
 
 import de.fosd.typechef.conditional.Opt
+import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,12 +24,8 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
                                condition.addInitNode(condition)
                                condition.addExitNode(condition)
                                doBranch.addInitNode(condition)     //init des do-block
-                           //    addEdge(stm.getLabel, b.b.last.entry.getPositionTo.getLine)     //Kante zum ersten Eintrag nach der SChleife
-//TODO condition zu first after doBranch                               addFlow(condition ,b.stmList.last.entry.getPositionTo.getLine)
-                           //    addEdge(stm.getLabel, b.b.head.entry.getPositionFrom.getLine)   //Kante zum nächsten Eintrag
                                addSubFlow(calculateFlowWithOps(condition,doBranch.stmList))
                                addExitNode(condition) //final(while) = label(condition)
-                           //    addEdge(b.b.last.entry.getPositionFrom.getLine, stm.getLabel)               //Kante zur Condition
                                condition.calculateFlowGraph()
                                doBranch.calculateFlowGraph()   //Program, daher unwichtig welches Exit es hat (wird neu berechnet)
                                addSubFlow(calculateFlowWithOpsReverse(doBranch.stmList, condition))
@@ -96,8 +93,8 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
     aeExit++=set
   }
 
-  override def setFeatures{
-    doBranch.setFeatures
+  override def setFeatures(feature:FeatureExpr){
+    doBranch.setFeatures(feature)
+    this.label.feature = feature
   }
 }
-

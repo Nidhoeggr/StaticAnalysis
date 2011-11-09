@@ -2,6 +2,7 @@ package data
 
 import de.fosd.typechef.parser.java15.TokenWrapper
 import de.fosd.typechef.conditional.{One, Choice, Conditional, Opt}
+import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,12 +21,9 @@ var expression:Expression = exp
 
 
   def calculateFlowGraph() {
-              //                  generateBlocks(stm)
-                               addInitNode(getLabel)
-                               expression.addInitNode(getLabel)
-//                               if(label!=exitLabel)
-//                                  addFlow(getLabel, getPositionTo.getLine)
-                               addExitNode(getLabel)
+                               addInitNode(this)
+                               expression.addInitNode(this)
+                               addExitNode(this)
 }
 
   def generateBlocks {
@@ -61,10 +59,9 @@ override def killAE(caller:AbstractSyntaxTree) {
     var aeExitIntersection:Set[AbstractSyntaxTree]= Set.empty
     var aeExitIntersectionDifferentFeature:Set[AbstractSyntaxTree]=null
     var aeExitIntersectionSameFeature:Set[AbstractSyntaxTree]=null
-//    var tmpSet:Set[AbstractSyntaxTree]=Set.empty
     for((from,to)<-prog.getFlow){
       if(to.equals(this)){
-          if(from.getLabel.feature.equivalentTo(to.getLabel.feature)){
+          if(from.getLabel.feature.equivalentTo(to.getLabel.feature)){        //Gleiches Feature, daher normale Join Operation (Schnitt) nehmen
             if(aeExitIntersectionSameFeature == null){
               aeExitIntersectionSameFeature = from.calculateAEexit(prog)
             }else{
@@ -116,5 +113,23 @@ override def killAE(caller:AbstractSyntaxTree) {
           allExpressions++=expression.getExpressions
       }
   }
+
+  /*
+  override def equals(x:Any):Boolean = {
+    x match{
+      case x:Assignment =>
+        return (this.name.toString.equals(x.name.toString) && this.expression.toString.equals(x.expression.toString) && this.feature.equivalentTo(x.feature))
+      case _ =>
+        return false
+    }
+
+  }
+  */
+
+    override def setFeatures(feature:FeatureExpr){
+      name.setFeatures(feature)
+      expression.setFeatures(feature)
+      this.label.feature = feature
+    }
 
 }

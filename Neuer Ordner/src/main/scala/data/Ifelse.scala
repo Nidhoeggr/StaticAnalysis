@@ -1,5 +1,7 @@
 package data
 
+import de.fosd.typechef.featureexpr.FeatureExpr
+
 /**
  * Created by IntelliJ IDEA.
  * User: Familie
@@ -18,8 +20,8 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
                             //  generateBlocks(stm)
                               //condition.setInitNode(condition)
                               //condition.setLabel(condition)
-                              condition.addExitNode(thenBranch.stmList.last.entry.getLabel)
-                              condition.addExitNode(elseBranch.stmList.last.entry.getLabel)
+                              condition.setExitNodes(thenBranch.calculateExitNodes)
+                              condition.setExitNodes(elseBranch.calculateExitNodes)
 //                              addEdge(stm.getLabel, t.b.head.entry.getPositionFrom.getLine)
                               addSubFlow(calculateFlowWithOps(condition, thenBranch.stmList))
                               //condition.addFlow(condition, thenBranch.stmList.head.entry)
@@ -30,8 +32,7 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
                               addInitNode(condition)
                               thenBranch.addInitNode(condition)
                               elseBranch.addInitNode(condition)
-                              addExitNode(thenBranch.stmList.last.entry.getLabel)    //final(ifelse) =
-                              addExitNode(elseBranch.stmList.last.entry.getLabel)   // final(if) U final(else)
+                              setExitNodes(thenBranch.getExitNodes ++ elseBranch.getExitNodes)
                               thenBranch.calculateFlowGraph();   //Kanten des Ifbranchs berechnen
                               elseBranch.calculateFlowGraph();   //Kanten des ElseBranchs berechnen
                               condition.calculateFlowGraph()
@@ -117,8 +118,10 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
     aeExit++=set
   }
 
-  override def setFeatures {
-    thenBranch.setFeatures
-    elseBranch.setFeatures
-  }
+    override def setFeatures(feature:FeatureExpr){
+      condition.setFeatures(feature)
+      thenBranch.setFeatures(feature)
+      elseBranch.setFeatures(feature)
+      this.label.feature = feature
+    }
 }

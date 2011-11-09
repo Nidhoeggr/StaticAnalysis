@@ -16,8 +16,8 @@ class IdentExpression(a: String) extends Expression {
   setLabel(this)
 
   override def calculateFlowGraph(){
-                               addInitNode(getLabel)
-                               addExitNode(getLabel)
+                               addInitNode(this)
+                               addExitNode(this)
   }
 
   override def generateBlocks {
@@ -52,6 +52,17 @@ class IdentExpression(a: String) extends Expression {
 
   override def printKillGen:String = getLabel+""
 
+/*
+  override def equals(x:Any):Boolean = {
+    x match{
+      case x:IdentExpression =>
+        return this.name.equals(x.name)
+
+      case _ =>
+        return false
+    }
+  }
+*/
   def equalsString(obj: IdentExpression):Boolean = {
     if(name.equals(obj.toString)){
       return true

@@ -193,7 +193,7 @@ class TestRunner {
 
 
     @Test
-    def run {
+    def run1 {
        val code = """begin{
                 n=u+1;
                 if(n<=2){
@@ -373,8 +373,8 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
-                assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
-                assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))               //TODO
+                assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
+                assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))
                 assert(prog.printKillGen.equals("\nGr[a,e]TrueKill: Set()Gen: Set(e)\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
 
 }
@@ -553,7 +553,6 @@ class TestRunner {
           JavaLexer.lex(code),FeatureExpr.base)
             y match{
             case parser.Success(v,_) =>
-                val x =  new FlowGraph()
                 var prog = new Program(v)
                 prog=aeAnalysis(prog)
                 output(prog)
@@ -565,7 +564,7 @@ class TestRunner {
   }
 
   def aeAnalysis(prog:Program):Program = {
-    prog.setFeatures
+    prog.setFeatures(null)
     prog.calculateFlowGraph()
     prog.generateBlocks
     prog.generateAllExpressions

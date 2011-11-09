@@ -1,6 +1,7 @@
 package data
 
 import de.fosd.typechef.conditional.{Conditional, Opt}
+import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,4 +16,5 @@ class AddExpression(name: IdentExpression, exp: Expression) extends Expression {
   expression = exp
 
     override def toString:String = "Add["+variable.toString+","+expression.toString+"]"
+
 }

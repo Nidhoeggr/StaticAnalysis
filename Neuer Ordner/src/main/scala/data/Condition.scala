@@ -1,6 +1,7 @@
 package data
 
 import de.fosd.typechef.conditional.{Conditional, Opt}
+import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,9 +18,7 @@ abstract class Condition() extends Statement {
 
    def calculateFlowGraph(){
                                addInitNode(this)
-                               expression.addInitNode(getLabel)
-//                               if(label!=exitLabel)
-//                                  addFlow(getLabel, getPositionTo.getLine)
+                               expression.addInitNode(this)
                               if(getExitNodes.isEmpty)
                                 addExitNode(this)
    }
@@ -73,4 +72,11 @@ abstract class Condition() extends Statement {
     aeExit = aeEntryUnionGen
     return aeEntryUnionGen
   }
+
+    override def setFeatures(feature:FeatureExpr){
+      variable.setFeatures(feature)
+      expression.setFeatures(feature)
+      this.label.feature = feature
+    }
+
 }

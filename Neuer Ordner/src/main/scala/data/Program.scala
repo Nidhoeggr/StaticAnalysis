@@ -1,6 +1,7 @@
 package data
 
 import de.fosd.typechef.conditional.{One, Conditional, Opt}
+import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,55 +13,10 @@ import de.fosd.typechef.conditional.{One, Conditional, Opt}
 
 class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
   var stmList:List[Opt[AbstractSyntaxTree]] = b
-    this.setLabel(stmList.head.entry.getLabel)
-
-  /*
-  def printAllNames() {
-    for (Opt(f,e)<-b)
-      e match {
-          e.mapf(
-          (f2,stmt)=>stmt match {
-          case a:Assignment=>println(a->featureExpr, a.name)
-
-      }
-
-      )
-
-        case One(x) =>
-          x match {
-            case Assign
-          }
-      }
-
-  }
- */
-
-//  def printKillGen:String = ""
-//  def generateBlocks {}
-//  def calculateFlowGraph {}
+  this.setLabel(stmList.head.entry.getLabel)
 
 
   def calculateFlowGraph(){
-/*
-    for(x:Opt[AbstractSyntaxTree]<-stmList){
-              x.entry.mapf(
-                (feature,entry2) => entry2 match{
-                  case entry2:Assignment =>
-                    entry2.calculateFlowGraph()
-                     addFlow(x.entry.getLabel,entry2.getLabel)        //Kante  vom Opt Knoten zum nächsten Assignment
-                  case entry2:Ifelse =>
-                    entry2.calculateFlowGraph()
-                    addFlow(x.entry.getLabel, entry2.getLabel)        //Kante vom Opt Knoten zur Condition
-                  case entry2:WhileStatement =>
-                    entry2.calculateFlowGraph()
-                    addFlow(x.entry.getLabel, entry2.getLabel)
-                  case _ => throw new Exception("Fehler")
-                }
-
-              )
-      }
-*/
-
     var oldStm:AbstractSyntaxTree = null
     var oldDefStmElse:Opt[AbstractSyntaxTree] = null    //zwei old Opt Knoten für then/else branch
     var oldDefStmThen:Opt[AbstractSyntaxTree] = null
@@ -73,19 +29,19 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
             case de.fosd.typechef.featureexpr.True => {
               stm.entry.calculateFlowGraph()
                if(oldStm!=null){//} && oldDefStmThen == null && oldDefStm == null){
-                 if(oldStm.getExitNodes.isEmpty)
-                    addFlow(oldStm,stm.entry.getLabel)
-                 for(node<-oldStm.getExitNodes)
-                    addFlow(node,stm.entry.getLabel)
+                 if(oldStm.getLabel.getExitNodes.isEmpty)
+                    addFlow(oldStm,stm.entry)
+                 for(node<-oldStm.getLabel.getExitNodes)
+                    addFlow(node,stm.entry)
                }
-               oldStm = stm.entry.getLabel
+               oldStm = stm.entry
                addSubFlow(stm.entry.getFlow)
                if(oldDefStmThen!=null){
-                 addFlow(oldDefStmThen.entry,stm.entry.getLabel)                    //Kante vom letzten Knoten des Opt-thenBranchs zum nächsten normalen Knoten
+                 addFlow(oldDefStmThen.entry,stm.entry)                    //Kante vom letzten Knoten des Opt-thenBranchs zum nächsten normalen Knoten
                  oldDefStmThen = null
                }
                if(oldDefStmElse!=null){
-                 addFlow(oldDefStmElse.entry, stm.entry.getLabel)
+                 addFlow(oldDefStmElse.entry, stm.entry)
                  oldDefStmElse = null
                }
               /*
@@ -98,60 +54,56 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
             case _ =>  {     //Optinaler Knoten
               var x = feature
               stm.entry.calculateFlowGraph()
-              if((oldDefStmThen != null && oldDefStmThen.feature.and(stm.feature).isSatisfiable())){      //Wenn es einen alten Opt Knoten gab und er das selbe Feature hat, dann packe ihn auf den FlowGraph
-                addFlow(oldDefStmThen.entry,stm.entry.getLabel)
+              val nextNodeWithSameFeature = getNodeByFeature(stm.entry)
+              if(nextNodeWithSameFeature!=null){
+                addFlow(stm.entry, nextNodeWithSameFeature)
+              }
+              if((oldDefStmThen != null && oldDefStmThen.feature.and(stm.feature).isSatisfiable())){      //Wenn es einen alten Opt Knoten gab und er das selbe feature hat, dann packe ihn auf den flußgraph
+                addFlow(oldDefStmThen.entry,stm.entry)
               }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
                 if(oldStm != null)
-                  addFlow(oldStm, stm.entry.getLabel)
+                  addFlow(oldStm, stm.entry)
                 if(oldDefStmElse != null && oldDefStmElse.feature.and(stm.feature).isSatisfiable())           //ElseBranch
-                  addFlow(oldDefStmElse.entry, stm.entry.getLabel)
+                  addFlow(oldDefStmElse.entry, stm.entry)
               }
               if(oldDefStmThen != null && !oldDefStmThen.feature.and(stm.feature).isSatisfiable()){
                 oldDefStmElse = stm
               }else{
-                oldDefStmThen = stm   //.getLabel              //das Label von IfElse ist Condition und damit nicht der Knoten von dem die Kante ausgehen soll
+                oldDefStmThen = stm
               }
               addSubFlow(stm.entry.getFlow)
             }
-
-            /*
-            case de.fosd.typechef.featureexpr.Not(_) =>  {     //Optinaler Knoten
-            stm.entry.calculateFlowGraph()
-              if((oldDefStm != null && oldDefStm.feature.equals(stm.feature))){      //Wenn es einen alten Opt Knoten gab und er den selben unären Operator hat, dann packe ihn auf den FlowGraph
-                addFlow(oldDefStm.entry,stm.entry.getLabel)
-              }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
-                if(oldStm != null)
-                  addFlow(oldStm, stm.entry.getLabel)
-              }
-              oldDefStm = stm   //.getLabel
-              addSubFlow(stm.entry.getFlow)
-            }
-              */
-
           }
-
       }
     }
   }
 
+  /**
+   * Gibt die nächste Node mit dem übergebenen Feature zurück, oder null falls keine existiert.
+   * Bedingung: stmList ist sortiert nach Abfolge der Statements
+   */
+  def getNodeByFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
+    var lastFoundNode:AbstractSyntaxTree = null
+    for(nodeTmp <- stmList.reverse){
+      if(nodeTmp.entry.equals(node)){                           //Optimierung, um nicht alles zu durchlaufen
+        return lastFoundNode
+      }
+      if(nodeTmp.feature.equivalentTo(node.getLabel.feature))    //Vergleich auf Position, um Gleichheit und vorherige Nodes auszuschließen
+       lastFoundNode = nodeTmp.entry
+    }
+    return null
+  }
+
+
   def calculateExitNodes:Set[AbstractSyntaxTree] = {
     var possibleExits:Set[AbstractSyntaxTree] = exitNodes
     for(stm <- stmList.reverse){
-      if(stm.entry.getLabel.feature.equivalentTo(this.getLabel.feature)) {   //TODO label so ubauen, dass es it opt klar kommt
+      if(stm.entry.getLabel.feature.equivalentTo(this.getLabel.feature)) {
           possibleExits+=stm.entry
           return possibleExits
       } else{
           possibleExits+=stm.entry
       }
-  /*
-      stm.feature match{
-        case de.fosd.typechef.featureexpr.True =>
-          possibleExits+=stm.entry
-          return possibleExits
-        case _ =>
-          possibleExits+=stm.entry
-      }
-  */
   }
     return possibleExits
   }
@@ -159,21 +111,12 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
   def calculateInitNodes:Set[AbstractSyntaxTree] = {
     var possibleInits:Set[AbstractSyntaxTree] = initNodes
     for(stm <- stmList){
-      if(stm.entry.getLabel.feature.equivalentTo(this.getLabel.feature)) {   //TODO label so ubauen, dass es it opt klar kommt
+      if(stm.entry.getLabel.feature.equivalentTo(this.getLabel.feature)) {
           possibleInits+=stm.entry
           return possibleInits
       } else{
           possibleInits+=stm.entry
       }
-/*
-      stm.feature match{
-        case de.fosd.typechef.featureexpr.True =>
-          possibleInits+=stm.entry
-          return possibleInits
-        case _ =>
-          possibleInits+=stm.entry
-      }
-*/
   }
     return possibleInits
   }
@@ -211,19 +154,6 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
         stm.calculateAEentry(this)
       }
     return Set.empty
-/*    var aeExitIntersection:Set[AbstractSyntaxTree]=null
-    for((from,to)<-prog.getFlow){
-      if(to.equals(this)){
-        if(aeExitIntersection == null){
-          aeExitIntersection=from.calculateAEexit(prog)
-        }else{
-          aeExitIntersection=from.calculateAEexit(prog) & aeExitIntersection
-        }
-      }
-    }
-    aeExit = aeExitIntersection
-    return aeExitIntersection
-*/
   }
 
   override def calculateAEexit(prog:Program):Set[AbstractSyntaxTree] = {
@@ -231,7 +161,6 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
         stm.calculateAEexit(prog)
       }
     return Set.empty
-//    return ((aeEntry--kill)++gen)
   }
 
   override def toString:String = "\n"+stmList.toString()
@@ -262,10 +191,12 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
 
   def getStmlist = stmList
 
-  override def setFeatures {
+  /**
+   * Beim initialen Aufruf darf feature null sein.
+   */
+  override def setFeatures(feature:FeatureExpr) {
     for(stm<-stmList){
-      stm.entry.setFeatures
-      stm.entry.getLabel.feature=stm.feature
+      stm.entry.setFeatures(stm.feature)
     }
   }
 
