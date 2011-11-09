@@ -513,6 +513,39 @@ class TestRunner {
 }
 
 
+  @Test
+  def run16 {
+
+  val code = """begin{
+           //#ifdef X
+           a=1;
+           b=2;
+            //#ifdef Y
+              c=3;
+              d=4;
+            //#endif
+           e=5;
+           e=6;
+            //#ifdef Z
+              f=7;
+              g=8;
+            //#endif
+           //#else
+           h=9;
+           i=10;
+           //#endif
+           }
+           end
+           """
+
+            runTest(code)
+//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
+//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
+//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
+
+}
+
+
 
   def runTest(code:String):Program =  {
           val parser=new WhileParser()

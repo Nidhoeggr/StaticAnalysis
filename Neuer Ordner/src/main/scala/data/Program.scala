@@ -98,12 +98,12 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
             case _ =>  {     //Optinaler Knoten
               var x = feature
               stm.entry.calculateFlowGraph()
-              if((oldDefStmThen != null && oldDefStmThen.feature.equivalentTo(stm.feature))){      //Wenn es einen alten Opt Knoten gab und er das selbe Feature hat, dann packe ihn auf den FlowGraph
+              if((oldDefStmThen != null && oldDefStmThen.feature.and(stm.feature).isSatisfiable())){      //Wenn es einen alten Opt Knoten gab und er das selbe Feature hat, dann packe ihn auf den FlowGraph
                 addFlow(oldDefStmThen.entry,stm.entry.getLabel)
               }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
                 if(oldStm != null)
                   addFlow(oldStm, stm.entry.getLabel)
-                if(oldDefStmElse != null && oldDefStmElse.feature.equivalentTo(stm.feature))           //ElseBranch
+                if(oldDefStmElse != null && oldDefStmElse.feature.and(stm.feature).isSatisfiable())           //ElseBranch
                   addFlow(oldDefStmElse.entry, stm.entry.getLabel)
               }
               if(oldDefStmThen != null && !oldDefStmThen.feature.and(stm.feature).isSatisfiable()){
