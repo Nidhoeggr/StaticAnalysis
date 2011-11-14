@@ -63,22 +63,22 @@ override def killAE(caller:AbstractSyntaxTree) {
       if(to.equals(this)){
           if(from.getLabel.feature.equivalentTo(to.getLabel.feature)){        //Gleiches Feature, daher normale Join Operation (Schnitt) nehmen
             if(aeExitIntersectionSameFeature == null){
-              aeExitIntersectionSameFeature = from.calculateAEexit(prog)
+              aeExitIntersectionSameFeature = from.getLabel.calculateAEexit(prog)
             }else{
-              aeExitIntersectionSameFeature = from.calculateAEexit(prog) & aeExitIntersectionSameFeature
+              aeExitIntersectionSameFeature = from.getLabel.calculateAEexit(prog) & aeExitIntersectionSameFeature
             }
           }else{    //Features stimmen nicht überein, daher ist ein unterschiedlicher Opt Knoten gegeben und es muß ein join durchgeführt werden
             if(aeExitIntersectionDifferentFeature == null){
-              aeExitIntersectionDifferentFeature = from.calculateAEexit(prog)
+              aeExitIntersectionDifferentFeature = from.getLabel.calculateAEexit(prog)
             }else{
-              aeExitIntersectionDifferentFeature = from.calculateAEexit(prog) ++ aeExitIntersectionDifferentFeature
+              aeExitIntersectionDifferentFeature = from.getLabel.calculateAEexit(prog) ++ aeExitIntersectionDifferentFeature
             }
           }
       }
     }
     if(aeExitIntersectionSameFeature != null){
       if(aeExitIntersectionDifferentFeature != null){
-        aeExitIntersection = aeExitIntersectionDifferentFeature ++ aeExitIntersectionSameFeature
+        aeExitIntersection = aeExitIntersectionDifferentFeature ++ aeExitIntersectionSameFeature                    //eigentliche Join (Schnitt) Operation der Analyse
       }else{
         aeExitIntersection = aeExitIntersectionSameFeature
       }

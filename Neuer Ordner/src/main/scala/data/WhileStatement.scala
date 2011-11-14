@@ -49,30 +49,6 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
     doBranch.genAE
   }
 
-  override def calculateAEentry(prog:Program):Set[AbstractSyntaxTree] ={
-    var aeExitIntersection:Set[AbstractSyntaxTree]=null
-    for((from,to)<-prog.getFlow){
-      if(to.equals(this)){
-        if(aeExitIntersection == null){
-          aeExitIntersection=from.calculateAEexit(prog)
-        }else{
-          aeExitIntersection=from.calculateAEexit(prog) & aeExitIntersection
-        }
-      }
-    }
-    if(aeExitIntersection != null){
-      aeEntry = aeExitIntersection
-    }
-    return aeExitIntersection
-  }
-
-  override def calculateAEexit(prog:Program):Set[AbstractSyntaxTree] = {
-    var aeEntryKill:Set[AbstractSyntaxTree] = aeEntry--kill
-    var aeEntryUnionGen:Set[AbstractSyntaxTree] = aeEntryKill ++ gen
-    aeExit = aeEntryUnionGen
-    return aeEntryUnionGen
-  }
-
   override def toString:String = "While["+condition.toString+" do"+doBranch.toString+"]"
 
   override def printKillGen:String = condition.printKillGen+doBranch.printKillGen

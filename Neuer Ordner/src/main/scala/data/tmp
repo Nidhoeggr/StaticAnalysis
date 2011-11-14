@@ -353,9 +353,9 @@ class TestRunner {
              """
 
            val prog:Program = runTest(code)
-  //                assert(prog.printFlow.equals("(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"c\"])\n(Gr[\"a\"Mul[\"b\"\"c\"]],Ass[\"b\"\"a\"])\n(Ass[\"b\"\"c\"],Ass[\"c\"\"3\"])\n(Ass[\"b\"\"a\"],Ass[\"c\"\"3\"])\n"))
-  //                assert(prog.printAE.equals("\nGr[\"a\"Mul[\"b\"\"c\"]] AEentry: Set() AEexit: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"c\")\nAss[\"b\"\"a\"] AEentry: Set(Mul[\"b\"\"c\"]) AEexit: Set(\"a\")\nAss[\"c\"\"3\"] AEentry: Set() AEexit: Set(\"3\")"))
-  //                assert(prog.printKillGen.equals("\nGr[\"a\"Mul[\"b\"\"c\"]]Kill: Set()Gen: Set(Mul[\"b\"\"c\"])\nAss[\"b\"\"c\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"c\")\nAss[\"b\"\"a\"]Kill: Set(Mul[\"b\"\"c\"])Gen: Set(\"a\")\nAss[\"c\"\"3\"]Kill: Set(Mul[\"b\"\"c\"], \"c\")Gen: Set(\"3\")"))
+                  assert(prog.printFlow.equals("(Gr[a,Mul[b,c]]True,Ass[b,c]True)\n(Gr[a,Mul[b,c]]True,Ass[b,a]True)\n(Ass[b,c]True,Ass[c,3]True)\n(Ass[b,a]True,Ass[c,3]True)\n"))
+                  assert(prog.printAE.equals("\nGr[a,Mul[b,c]]True AEentry: Set() AEexit: Set(Mul[b,c])\nAss[b,c]True AEentry: Set(Mul[b,c]) AEexit: Set(c)\nAss[b,a]True AEentry: Set(Mul[b,c]) AEexit: Set(a)\nAss[c,3]True AEentry: Set() AEexit: Set(3)"))
+                  assert(prog.printKillGen.equals("\nGr[a,Mul[b,c]]TrueKill: Set()Gen: Set(Mul[b,c])\nAss[b,c]TrueKill: Set(Mul[b,c])Gen: Set(c)\nAss[b,a]TrueKill: Set(Mul[b,c])Gen: Set(a)\nAss[c,3]TrueKill: Set(Mul[b,c], c)Gen: Set(3)"))
 
   }
 
@@ -373,8 +373,8 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
-                assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
-                assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e, Add[a,b]) AEexit: Set(e, Add[a,b], c)"))
+                assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
+                assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e) AEexit: Set(e, c)"))
                 assert(prog.printKillGen.equals("\nGr[a,e]TrueKill: Set()Gen: Set(e)\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
 
 }
@@ -424,11 +424,11 @@ class TestRunner {
               a=b+c;
               //#if X
                 if(a<b){
-                  f=5;
+                  f=x;
                 }else{
-                  g=6;
+                  g=y;
                 }
-                w=20;
+                w=z;
               //#endif
               e=z;
            }
@@ -436,9 +436,6 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
-//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
 
 }
 
@@ -475,9 +472,6 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
-//                assert(prog.printFlow.equals("(Le[a,b],Ass[g,6])\n(Ass[g,6],Ass[w,20])\n(Ass[a,Add[b,c]],Le[a,b])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[f,5],Ass[w,20])\n=========FLOW-END=======\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
 
 }
 
@@ -506,9 +500,6 @@ class TestRunner {
            """
 
             runTest(code)
-//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
 
 }
 
@@ -539,12 +530,105 @@ class TestRunner {
            """
 
             runTest(code)
-//                assert(prog.printFlow.equals("(Ass[a,Add[b,c]],Le[a,b])\n(Ass[f,5],Ass[w,20])\n(Ass[g,6],Ass[w,20])\n(Le[a,b],Ass[f,5])\n(Ass[w,20],Ass[e,z])\n(Ass[a,Add[b,c]],Ass[e,z])\n(Le[a,b],Ass[g,6])\n"))
-//                assert(prog.printAE.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]] AEentry: Set() AEexit: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"] AEentry: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]]) AEexit: Set(Div[\"f\"\"abc\"], \"1\")"))
-//                assert(prog.printKillGen.equals("\nAss[\"c\"Mul[\"d\"Div[\"f\"\"abc\"]]]Kill: Set()Gen: Set(Div[\"f\"\"abc\"], Mul[\"d\"Div[\"f\"\"abc\"]])\nAss[\"d\"\"1\"]Kill: Set(Mul[\"d\"Div[\"f\"\"abc\"]])Gen: Set(\"1\")"))
 
 }
 
+
+  @Test
+  def run17 {
+
+  val code = """begin{
+           //#ifdef X
+            a=b+c;
+           //#ifdef Y
+            b=e/f;
+            b=e-f;
+           //#endif
+            a=b*c;
+           //#endif
+           }end
+           """
+
+    val prog:Program = runTest(code)
+    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
+    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
+    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
+
+
+}
+
+  @Test
+  def run18 {
+
+  val code = """begin{
+           //#ifdef X
+            a=b+c;
+           //#else
+            a=b-c;
+           //#endif
+           //#ifdef Y
+            a=b*c;
+           //#endif
+           }end
+           """
+
+    val prog:Program = runTest(code)
+    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(Y))\n(Ass[a,Sub[b,c]]!def(X),Ass[a,Mul[b,c]]def(Y))\n"))
+    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[a,Sub[b,c]]!def(X) AEentry: Set() AEexit: Set(Sub[b,c])\nAss[a,Mul[b,c]]def(Y) AEentry: Set(Sub[b,c], Add[b,c]) AEexit: Set(Sub[b,c], Add[b,c], Mul[b,c])"))
+    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[a,Sub[b,c]]!def(X)Kill: Set()Gen: Set(Sub[b,c])\nAss[a,Mul[b,c]]def(Y)Kill: Set()Gen: Set(Mul[b,c])"))
+
+
+}
+
+  @Test
+  def run19 {
+
+  val code = """begin{
+           //#ifdef Y
+            b=c;
+           //#ifdef X
+            a=b*c;
+           //#else
+            b=b*c;
+           //#endif
+            c=f*g;
+           //#endif
+           }end
+           """
+
+    val prog:Program = runTest(code)
+//    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
+//    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
+//    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
+
+
+}
+
+
+  @Test
+  def run20 {
+
+  val code = """begin{
+        //#ifdef A
+        s=1;
+        //#else
+          //#ifdef Y
+           b=c;
+          //#else
+            //#ifdef X
+              a=b*c;
+            //#else
+              b=b*c;
+            //#endif
+           c=f*g;
+           //#endif
+           //#endif
+           }end
+           """
+
+    val prog:Program = runTest(code)
+
+}
 
 
   def runTest(code:String):Program =  {

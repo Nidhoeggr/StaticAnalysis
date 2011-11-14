@@ -20,8 +20,9 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
                             //  generateBlocks(stm)
                               //condition.setInitNode(condition)
                               //condition.setLabel(condition)
-                              condition.setExitNodes(thenBranch.calculateExitNodes)
-                              condition.setExitNodes(elseBranch.calculateExitNodes)
+                              thenBranch.setExitNodes(thenBranch.calculateExitNodes)
+                              elseBranch.setExitNodes(elseBranch.calculateExitNodes)
+                              condition.setExitNodes(thenBranch.getExitNodes ++ elseBranch.getExitNodes)
 //                              addEdge(stm.getLabel, t.b.head.entry.getPositionFrom.getLine)
                               addSubFlow(calculateFlowWithOps(condition, thenBranch.stmList))
                               //condition.addFlow(condition, thenBranch.stmList.head.entry)
@@ -32,7 +33,7 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
                               addInitNode(condition)
                               thenBranch.addInitNode(condition)
                               elseBranch.addInitNode(condition)
-                              setExitNodes(thenBranch.getExitNodes ++ elseBranch.getExitNodes)
+                              setExitNodes(condition.getExitNodes)
                               thenBranch.calculateFlowGraph();   //Kanten des Ifbranchs berechnen
                               elseBranch.calculateFlowGraph();   //Kanten des ElseBranchs berechnen
                               condition.calculateFlowGraph()
@@ -59,41 +60,6 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
     thenBranch.genAE
     elseBranch.genAE
   }
-
-  override def calculateAEentry(prog:Program):Set[AbstractSyntaxTree] ={
-    var aeExitIntersection:Set[AbstractSyntaxTree]=null
-    var aeExitIntersectionTmpOne:Set[AbstractSyntaxTree]=Set.empty
-    for((from,to)<-prog.getFlow){
-      if(to.equals(this)){
-        if(aeExitIntersection == null){
-          aeExitIntersection=from.calculateAEexit(prog)
-        }else{
-          //aeExitIntersection= from.calculateAEexit(prog) & aeExitIntersection
-          aeExitIntersectionTmpOne = from.calculateAEexit(prog)
-          var tmpSet:Set[AbstractSyntaxTree]=Set.empty
-          for(tmp1 <-aeExitIntersectionTmpOne)                                     //equals selber simulieren, da ich auf textuelle Gleichheit prüfen muß
-            for(tmp2 <-aeExitIntersection){
-              if(tmp1.toString.equals(tmp2.toString)){
-                tmpSet+=tmp1
-              }
-            }
-          aeExitIntersection = tmpSet
-        }
-      }
-    }
-    if(aeExitIntersection != null){
-      aeEntry = aeExitIntersection
-    }
-    return aeExitIntersection
-  }
-
-  override def calculateAEexit(prog:Program):Set[AbstractSyntaxTree] = {
-    var aeEntryKill:Set[AbstractSyntaxTree] = aeEntry--kill
-    var aeEntryUnionGen:Set[AbstractSyntaxTree] = aeEntryKill ++ gen
-    aeExit = aeEntryUnionGen
-    return aeEntryUnionGen
-  }
-
 
   override def toString:String = "If["+condition.toString+" then:"+thenBranch.toString+" else:"+elseBranch.toString+"]"
 

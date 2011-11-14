@@ -48,7 +48,7 @@ abstract class Condition() extends Statement {
           aeExitIntersection=from.calculateAEexit(prog)
         }else{
           //aeExitIntersection= from.calculateAEexit(prog) & aeExitIntersection
-          aeExitIntersectionTmpOne = from.calculateAEexit(prog)
+          aeExitIntersectionTmpOne = from.getLabel.calculateAEexit(prog)
           var tmpSet:Set[AbstractSyntaxTree]=Set.empty
           for(tmp1 <-aeExitIntersectionTmpOne)                                     //equals selber simulieren, da ich auf textuelle Gleichheit prüfen muß
             for(tmp2 <-aeExitIntersection){

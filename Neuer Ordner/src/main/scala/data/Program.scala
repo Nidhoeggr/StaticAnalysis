@@ -29,9 +29,9 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
             case de.fosd.typechef.featureexpr.True => {
               stm.entry.calculateFlowGraph()
                if(oldStm!=null){//} && oldDefStmThen == null && oldDefStm == null){
-                 if(oldStm.getLabel.getExitNodes.isEmpty)
+                 if(oldStm.getExitNodes.isEmpty)
                     addFlow(oldStm,stm.entry)
-                 for(node<-oldStm.getLabel.getExitNodes)
+                 for(node<-oldStm.getExitNodes)
                     addFlow(node,stm.entry)
                }
                oldStm = stm.entry
@@ -52,30 +52,79 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
                */
             }
             case _ =>  {     //Optinaler Knoten
-              var x = feature
               stm.entry.calculateFlowGraph()
+/*
               val nextNodeWithSameFeature = getNodeByFeature(stm.entry)
+              val nextNodeWithContradictionFeature = getNodeByContraFeature(stm.entry)
               if(nextNodeWithSameFeature!=null){
                 addFlow(stm.entry, nextNodeWithSameFeature)
               }
               if((oldDefStmThen != null && oldDefStmThen.feature.and(stm.feature).isSatisfiable())){      //Wenn es einen alten Opt Knoten gab und er das selbe feature hat, dann packe ihn auf den flußgraph
                 addFlow(oldDefStmThen.entry,stm.entry)
+                if(nextNodeWithContradictionFeature!=null){
+                  addFlow(oldDefStmThen.entry, nextNodeWithContradictionFeature)
+                }
               }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
                 if(oldStm != null)
                   addFlow(oldStm, stm.entry)
-                if(oldDefStmElse != null && oldDefStmElse.feature.and(stm.feature).isSatisfiable())           //ElseBranch
-                  addFlow(oldDefStmElse.entry, stm.entry)
               }
+              if(oldDefStmElse != null && oldDefStmElse.feature.and(stm.feature).isSatisfiable())           //ElseBranch
+                addFlow(oldDefStmElse.entry, stm.entry)
               if(oldDefStmThen != null && !oldDefStmThen.feature.and(stm.feature).isSatisfiable()){
                 oldDefStmElse = stm
               }else{
                 oldDefStmThen = stm
               }
               addSubFlow(stm.entry.getFlow)
+*/
+              var nextNodeWithSameFeature = getNodeByFeature(stm.entry)
+              if(nextNodeWithSameFeature != null){
+                addFlow(stm.entry, nextNodeWithSameFeature)       //Kante zum nächsten Knoten mit dem selben Feature
+              }
+              val next = nextStm(stm.entry)
+              if(next != null){
+                if(next.getLabel.feature.equivalentTo(stm.entry.getLabel.feature)){                                 //Kante zum nächsten Knoten, falls er das selbe Feature hat (redundant ? )
+                  addFlow(stm.entry, next)
+                }else{
+                  if(next.getLabel.feature.and(stm.entry.getLabel.feature).isSatisfiable){                         //Kante zum nächsten Knoten, falls er erfüllbar ist
+                    addFlow(stm.entry, next)
+                    val tempNode = getNodeByContraFeature(next.getLabel)
+                    if(tempNode != null)                                                                             //Kante zum nächsten Knoten, falls er ein gegensätzliches Feature zum erfüllbaren Knoten hat (if/else)
+                      addFlow(stm.entry, tempNode)
+                  }else{
+                    val tempNode = getSatisfiableNodeByFeature(stm.entry.getLabel)                                   //generelle Kante zum nächsten überhaupt erfüllbaren Knoten
+                    if(tempNode != null)
+                      addFlow(stm.entry, tempNode)
+                  }
+                }
+              }
             }
           }
       }
     }
+  }
+
+  def nextStm(from:AbstractSyntaxTree):AbstractSyntaxTree = {
+    var iterator = stmList.iterator
+    while(iterator.hasNext){
+      var node = iterator.next
+      if(node.entry.equals(from) && iterator.hasNext){
+        return iterator.next.entry
+      }
+    }
+    return null
+  }
+
+  def getSatisfiableNodeByFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
+    var lastFoundNode:AbstractSyntaxTree = null
+    for(nodeTmp <- stmList.reverse){
+      if(nodeTmp.entry.equals(node)){
+        return lastFoundNode
+      }
+      if(nodeTmp.feature.and(node.getLabel.feature).isSatisfiable)
+       lastFoundNode = nodeTmp.entry
+    }
+    return null
   }
 
   /**
@@ -85,10 +134,28 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
   def getNodeByFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
     var lastFoundNode:AbstractSyntaxTree = null
     for(nodeTmp <- stmList.reverse){
-      if(nodeTmp.entry.equals(node)){                           //Optimierung, um nicht alles zu durchlaufen
+      if(nodeTmp.entry.equals(node)){
         return lastFoundNode
       }
-      if(nodeTmp.feature.equivalentTo(node.getLabel.feature))    //Vergleich auf Position, um Gleichheit und vorherige Nodes auszuschließen
+      if(nodeTmp.feature.equivalentTo(node.getLabel.feature))
+       lastFoundNode = nodeTmp.entry
+    }
+    return null
+  }
+
+
+
+  /**
+   * Gibt die nächste Node zurück, die dem Feature der übergebenen Node widerspricht (else), oder null falls keine existiert.
+   * Bedingung: stmList ist sortiert nach Abfolge der Statements
+   */
+  def getNodeByContraFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
+    var lastFoundNode:AbstractSyntaxTree = null
+    for(nodeTmp <- stmList.reverse){
+      if(nodeTmp.entry.equals(node)){
+        return lastFoundNode
+      }
+      if(nodeTmp.feature.and(node.getLabel.feature).isContradiction())
        lastFoundNode = nodeTmp.entry
     }
     return null
