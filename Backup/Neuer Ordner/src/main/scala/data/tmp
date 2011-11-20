@@ -150,8 +150,6 @@ class TestRunner {
       //            println(i)
    //            }
                 println(prog.getFlow.toString())
-//                val ae = new AvailableExpressionAnalysis
-//                ae.aeExpressionInit(prog,x)
                 println("========================================")
 
         }

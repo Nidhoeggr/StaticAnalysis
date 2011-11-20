@@ -596,9 +596,26 @@ class TestRunner {
            }end
            """
 
-    val prog:Program = runTest(code)
-    val test:List[List[AbstractSyntaxTree]] = explodeVae(prog.stmList)
-    println("tralala")
+    println("########################################################################################")
+    val prog:Program = runTestWithoutAnalysis(code)
+    val prog1:Program = runTest(code)
+    println("########################################################################################")
+    val test:List[List[Opt[AbstractSyntaxTree]]] = explodeVae(prog.stmList)
+    for(x:List[Opt[AbstractSyntaxTree]] <- test){
+      if(!x.isEmpty){
+        var progTest:Program = new Program(x)
+        progTest = aeAnalysis(progTest)
+        output(progTest)
+        println("########################################################################################")
+      }
+    }
+    val prog2:List[Program] = explodeAnalyse(prog1)
+    println("##############################################################################################" +
+      "####################################################################################################")
+    for(x:Program <- prog2){
+      output(x)
+      println("##########################################################################")
+    }
 //    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
 //    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
 //    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
@@ -649,6 +666,18 @@ class TestRunner {
 
   }
 
+  def runTestWithoutAnalysis(code:String):Program ={
+          val parser=new WhileParser()
+          val y=parser.start(
+          JavaLexer.lex(code),FeatureExpr.base)
+            y match{
+            case parser.Success(v,_) =>
+                var prog = new Program(v)
+                return prog
+            case _ => return null
+             }
+  }
+
   def aeAnalysis(prog:Program):Program = {
     prog.setFeatures(null)
     prog.calculateFlowGraph()
@@ -687,19 +716,22 @@ class TestRunner {
   /**
    * Setzt alle Features eines AST auf true, die äquivalent zu dem angegebenen Feature sind. Löscht den Rest. Der übergebene AST wird nicht verändert.
    */
-  def configureAST(ast:List[Opt[AbstractSyntaxTree]],feature:List[FeatureExpr]): Set[AbstractSyntaxTree] = {
-    var resultAST:Set[AbstractSyntaxTree] = Set.empty
+  def configureAST(ast:List[Opt[AbstractSyntaxTree]],featureList:List[FeatureExpr], extended:Boolean): Set[Opt[AbstractSyntaxTree]] = {
+    var resultAST:Set[Opt[AbstractSyntaxTree]] = Set.empty
     var tmp:FeatureExpr = de.fosd.typechef.featureexpr.True
-    for(f<-feature){
+    for(f<-featureList){
       tmp = tmp.and(f)
     }
     if(!tmp.isSatisfiable())
       return resultAST
     for(stm:Opt[AbstractSyntaxTree] <- ast){
-      for(feature:FeatureExpr <- feature){
-        if(!feature.andNot(stm.entry.feature).isSatisfiable()){       //TODO AAARRRRGGGHHHHH
-          val cloned:AbstractSyntaxTree = stm.entry.copy()
-          cloned.setFeatures(de.fosd.typechef.featureexpr.True)
+      for(feature:FeatureExpr <- featureList){
+        if(!feature.andNot(stm.feature).isSatisfiable()){
+          var cloned:Opt[AbstractSyntaxTree] = null
+          if(extended)
+            cloned = stm.copy(de.fosd.typechef.featureexpr.True, stm.entry.copyExtended)
+          else
+            cloned = stm.copy(de.fosd.typechef.featureexpr.True, stm.entry.copy)
           resultAST+=cloned
         }
       }
@@ -713,7 +745,7 @@ class TestRunner {
   def generateAllFeatures(ast:List[Opt[AbstractSyntaxTree]]) : List[List[FeatureExpr]] = {
     var allFeatures:Set[FeatureExpr] = Set.empty
     for(stm:Opt[AbstractSyntaxTree]<-ast){
-      allFeatures += stm.entry.feature
+      allFeatures += stm.feature
     }
     var result:List[List[FeatureExpr]] = List.empty
     for(x <- 1 to allFeatures.size){
@@ -725,12 +757,27 @@ class TestRunner {
   /**
    * Setzt alle Featurekombinationen die übergeben werden in den übergebenen AST ein und gibt alle ASTKobinationen zurück.
    */
-  def explodeVae(ast:List[Opt[AbstractSyntaxTree]]): List[List[AbstractSyntaxTree]] = {
-    var exploded:List[List[AbstractSyntaxTree]] = List(List.empty)
+  def explodeVae(ast:List[Opt[AbstractSyntaxTree]]): List[List[Opt[AbstractSyntaxTree]]] = {
+    var exploded:List[List[Opt[AbstractSyntaxTree]]] = List(List.empty)
     val allFeatures:List[List[FeatureExpr]] = generateAllFeatures(ast)
     for(featureList:List[FeatureExpr] <- allFeatures){
-      val configuredAST:Set[AbstractSyntaxTree] = configureAST(ast, featureList)
+      val configuredAST:Set[Opt[AbstractSyntaxTree]] = configureAST(ast, featureList, false)
       exploded = exploded ::: List(configuredAST.toList)
+    }
+    return exploded
+  }
+
+  /**
+   * Nimmt eine fertige Analyse entgegen und generiert anhand aller Feature-Permutationen Teilanalysen der kompletten.
+   */
+  def explodeAnalyse(program:Program) : List[Program] = {
+    var exploded:List[Program] = List.empty
+    val allFeatures:List[List[FeatureExpr]] = generateAllFeatures(program.stmList)
+    for(featureList:List[FeatureExpr] <- allFeatures){
+      val tmp = configureAST(program.stmList, featureList, true)
+      if(!tmp.isEmpty){
+        exploded = exploded.::(new Program(tmp.toList))     //TODO hier wird ein neues Program erzeugt, daher werden die alten sachen gelöscht. Hier darf ich die einträge nicht löschen, sondern muß sie übernehmen. Methode nötig, um die einträge des alten programs zu verändern in abhängigkeit von den feature-permutationen
+      }
     }
     return exploded
   }

@@ -3,6 +3,7 @@ package data
 import de.fosd.typechef.parser._
 import de.fosd.typechef.conditional.{Conditional, Opt}
 import de.fosd.typechef.featureexpr.{DefinedExpr, FeatureExpr}
+import collection.mutable.Map
 
 /**
  * Created by IntelliJ IDEA.
@@ -198,8 +199,123 @@ def printAE:String = ""
   }
 
   def setFeatures(feature:FeatureExpr){
+    this.feature = feature
     this.getLabel.feature = feature
   }
 
+  /**
+   * VORSICHT: die Methode ist keine deep-copy Methode, sondern eine Hilfsmethode für die Testinfrastruktur. Es wird eine spezielle Kopie für die Analyse erzeugt. Dabei werden
+   * einige Felder zurückgesetzt und nicht kopiert.
+   * Erzeugt eine Kopie des AbstractSyntaxTrees auf dem die Methode gerufen wird.(Vorsicht auch Number wird kopiert auf der die Methode equals arbeitet). Vorsicht label wird nicht
+   * geclont.
+   */
+  def copy : AbstractSyntaxTree = {
+    var cloned:AbstractSyntaxTree = null
+    val toClone:AbstractSyntaxTree = this
+    toClone match {
+      case toClone:AddExpression =>
+        cloned = new AddExpression(toClone.variable, toClone.expression)
+      case toClone:Assignment =>
+        cloned = new Assignment(toClone.name, toClone.expression)
+      case toClone:ConditionEquals =>
+        cloned = new ConditionEquals(toClone.variable, toClone.expression)
+      case toClone:ConditionGreater =>
+        cloned = new ConditionGreater(toClone.variable, toClone.expression)
+      case toClone:ConditionGreaterOrEquals =>
+        cloned = new ConditionGreaterOrEquals(toClone.variable, toClone.expression)
+      case toClone:ConditionLesser =>
+        cloned = new ConditionLesser(toClone.variable, toClone.expression)
+      case toClone:ConditionLessOrEquals =>
+        cloned = new ConditionLessOrEquals(toClone.variable, toClone.expression)
+      case toClone:DivExpression =>
+        cloned = new DivExpression(toClone.variable, toClone.expression)
+      case toClone:IdentExpression =>
+        cloned = new IdentExpression(toClone.name)
+      case toClone:Ifelse =>
+        cloned = new Ifelse(toClone.condition, toClone.thenBranch, toClone.elseBranch)
+      case toClone:IntExpression =>
+        cloned = new IdentExpression(toClone.name)
+      case toClone:MulExpression =>
+        cloned = new MulExpression(toClone.variable, toClone.expression)
+      case toClone:Program =>
+        cloned = new Program(toClone.stmList)
+      case toClone:SubExpression =>
+        cloned = new SubExpression(toClone.variable, toClone.expression)
+      case toClone:WhileStatement =>
+        cloned = new WhileStatement(toClone.condition, toClone.doBranch)
+    }
+      cloned.aeEntry = Set.empty
+      cloned.aeExit = Set.empty
+      cloned.allExpressions = Set.empty
+      cloned.blocks = Set.empty
+      cloned.exitNodes = Set.empty
+      cloned.feature = toClone.feature
+      cloned.flow = Set.empty
+      cloned.gen = Set.empty
+      cloned.initNodes = Set.empty
+      cloned.label = toClone.label
+      cloned.kill = Set.empty
+      cloned.number = toClone.number
+      cloned.range = toClone.range
+    return cloned
 
+  }
+
+  /**
+   * VORSICHT: die Methode ist keine deep-copy Methode, sondern eine Hilfsmethode für die Testinfrastruktur. Es wird eine spezielle Kopie für die Analyse erzeugt. Dabei werden
+   * einige Felder zurückgesetzt und nicht kopiert. In dieser Version hier werden AE relevante Felder nicht zurück gesetzt.
+   * Erzeugt eine Kopie des AbstractSyntaxTrees auf dem die Methode gerufen wird.(Vorsicht auch Number wird kopiert auf der die Methode equals arbeitet). Vorsicht label wird nicht
+   * geclont.
+   */
+  def copyExtended : AbstractSyntaxTree = {
+    var cloned:AbstractSyntaxTree = null
+    val toClone:AbstractSyntaxTree = this
+    toClone match {
+      case toClone:AddExpression =>
+        cloned = new AddExpression(toClone.variable, toClone.expression)
+      case toClone:Assignment =>
+        cloned = new Assignment(toClone.name, toClone.expression)
+      case toClone:ConditionEquals =>
+        cloned = new ConditionEquals(toClone.variable, toClone.expression)
+      case toClone:ConditionGreater =>
+        cloned = new ConditionGreater(toClone.variable, toClone.expression)
+      case toClone:ConditionGreaterOrEquals =>
+        cloned = new ConditionGreaterOrEquals(toClone.variable, toClone.expression)
+      case toClone:ConditionLesser =>
+        cloned = new ConditionLesser(toClone.variable, toClone.expression)
+      case toClone:ConditionLessOrEquals =>
+        cloned = new ConditionLessOrEquals(toClone.variable, toClone.expression)
+      case toClone:DivExpression =>
+        cloned = new DivExpression(toClone.variable, toClone.expression)
+      case toClone:IdentExpression =>
+        cloned = new IdentExpression(toClone.name)
+      case toClone:Ifelse =>
+        cloned = new Ifelse(toClone.condition, toClone.thenBranch, toClone.elseBranch)
+      case toClone:IntExpression =>
+        cloned = new IdentExpression(toClone.name)
+      case toClone:MulExpression =>
+        cloned = new MulExpression(toClone.variable, toClone.expression)
+      case toClone:Program =>
+        cloned = new Program(toClone.stmList)
+      case toClone:SubExpression =>
+        cloned = new SubExpression(toClone.variable, toClone.expression)
+      case toClone:WhileStatement =>
+        cloned = new WhileStatement(toClone.condition, toClone.doBranch)
+    }
+      cloned.aeEntry = toClone.aeEntry
+      cloned.aeExit = toClone.aeExit
+      cloned.allExpressions = toClone.allExpressions
+      cloned.blocks = toClone.blocks
+      cloned.exitNodes = toClone.exitNodes
+      cloned.feature = toClone.feature
+      cloned.flow = toClone.flow
+      cloned.gen = toClone.gen
+      cloned.initNodes = toClone.initNodes
+      cloned.label = toClone.label
+      cloned.kill = toClone.kill
+      cloned.number = toClone.number
+      cloned.range = toClone.range
+    return cloned
+
+  }
 }

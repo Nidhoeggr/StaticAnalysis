@@ -11,7 +11,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
  * To change this template use File | Settings | File Templates.
  */
 
-class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
+class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
   var stmList:List[Opt[AbstractSyntaxTree]] = b
   this.setLabel(stmList.head.entry.getLabel)
 
@@ -259,7 +259,8 @@ class Program(b: List[Opt[Statement]]) extends AbstractSyntaxTree {
   def getStmlist = stmList
 
   /**
-   * Beim initialen Aufruf darf feature null sein.
+   * Es werden alle feature Informationen aus den Opt Knoten in die AST Knoten kopiert.
+   * Beim initialen Aufruf der Methode darf feature null sein, da es nicht benutzt wird.
    */
   override def setFeatures(feature:FeatureExpr) {
     for(stm<-stmList){
