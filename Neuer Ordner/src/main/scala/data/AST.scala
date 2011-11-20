@@ -2,7 +2,7 @@ package data
 
 import de.fosd.typechef.parser._
 import de.fosd.typechef.conditional.{Conditional, Opt}
-import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.featureexpr.{DefinedExpr, FeatureExpr}
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +26,6 @@ abstract class AbstractSyntaxTree extends WithPosition  {
 var feature:FeatureExpr = null
 var initNodes : Set[AbstractSyntaxTree] = Set.empty
 var exitNodes : Set[AbstractSyntaxTree] = Set.empty
-//var flow : List[(AbstractSyntaxTree,AbstractSyntaxTree)] = List.empty
 var flow : Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = Set.empty
 var label : AbstractSyntaxTree = null
 var aeEntry : Set[AbstractSyntaxTree] = Set.empty
@@ -193,17 +192,7 @@ def printAE:String = ""
           result+=((stm.entry.getLabel, to))
         }
         feature=stm.entry.getLabel.feature
-    }
-/*
-      match {
-        case de.fosd.typechef.featureexpr.True =>
-          result+=((stm.entry.getLabel, to))
-          return result
-        case _ =>
-          if(feature)
-          result+=((stm.entry.getLabel, to))
       }
-*/
     }
     return result
   }
@@ -211,4 +200,6 @@ def printAE:String = ""
   def setFeatures(feature:FeatureExpr){
     this.getLabel.feature = feature
   }
+
+
 }

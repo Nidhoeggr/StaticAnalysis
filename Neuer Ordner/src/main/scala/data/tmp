@@ -597,6 +597,8 @@ class TestRunner {
            """
 
     val prog:Program = runTest(code)
+    val test:List[List[AbstractSyntaxTree]] = explodeVae(prog.stmList)
+    println("tralala")
 //    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
 //    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
 //    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
@@ -680,4 +682,58 @@ class TestRunner {
     print(prog.printFlow)
     println("=========FLOW-END=========")
   }
+
+
+  /**
+   * Setzt alle Features eines AST auf true, die äquivalent zu dem angegebenen Feature sind. Löscht den Rest. Der übergebene AST wird nicht verändert.
+   */
+  def configureAST(ast:List[Opt[AbstractSyntaxTree]],feature:List[FeatureExpr]): Set[AbstractSyntaxTree] = {
+    var resultAST:Set[AbstractSyntaxTree] = Set.empty
+    var tmp:FeatureExpr = de.fosd.typechef.featureexpr.True
+    for(f<-feature){
+      tmp = tmp.and(f)
+    }
+    if(!tmp.isSatisfiable())
+      return resultAST
+    for(stm:Opt[AbstractSyntaxTree] <- ast){
+      for(feature:FeatureExpr <- feature){
+        if(!feature.andNot(stm.entry.feature).isSatisfiable()){       //TODO AAARRRRGGGHHHHH
+          val cloned:AbstractSyntaxTree = stm.entry.copy()
+          cloned.setFeatures(de.fosd.typechef.featureexpr.True)
+          resultAST+=cloned
+        }
+      }
+    }
+    return resultAST
+  }
+
+  /**
+   * Kombiniert alle Features
+   */
+  def generateAllFeatures(ast:List[Opt[AbstractSyntaxTree]]) : List[List[FeatureExpr]] = {
+    var allFeatures:Set[FeatureExpr] = Set.empty
+    for(stm:Opt[AbstractSyntaxTree]<-ast){
+      allFeatures += stm.entry.feature
+    }
+    var result:List[List[FeatureExpr]] = List.empty
+    for(x <- 1 to allFeatures.size){
+      result = result ::: allFeatures.toList.combinations(x).toList
+    }
+    return result
+  }
+
+  /**
+   * Setzt alle Featurekombinationen die übergeben werden in den übergebenen AST ein und gibt alle ASTKobinationen zurück.
+   */
+  def explodeVae(ast:List[Opt[AbstractSyntaxTree]]): List[List[AbstractSyntaxTree]] = {
+    var exploded:List[List[AbstractSyntaxTree]] = List(List.empty)
+    val allFeatures:List[List[FeatureExpr]] = generateAllFeatures(ast)
+    for(featureList:List[FeatureExpr] <- allFeatures){
+      val configuredAST:Set[AbstractSyntaxTree] = configureAST(ast, featureList)
+      exploded = exploded ::: List(configuredAST.toList)
+    }
+    return exploded
+  }
+
+
 }
