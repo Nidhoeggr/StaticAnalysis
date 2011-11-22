@@ -134,16 +134,14 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
   def getNodeByFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
     var lastFoundNode:AbstractSyntaxTree = null
     for(nodeTmp <- stmList.reverse){
-      if(nodeTmp.entry.equals(node)){
+      if(nodeTmp.entry.getLabel.equals(node.getLabel)){
         return lastFoundNode
       }
       if(nodeTmp.feature.equivalentTo(node.getLabel.feature))
-       lastFoundNode = nodeTmp.entry
+       lastFoundNode = nodeTmp.entry.getLabel
     }
     return null
   }
-
-
 
   /**
    * Gibt die nächste Node zurück, die dem Feature der übergebenen Node widerspricht (else), oder null falls keine existiert.
@@ -232,6 +230,13 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
 
   override def toString:String = "\n"+stmList.toString()
 
+  override def toStringWithoutFeatures:String = {
+    var result = ""
+    for(stm<-blocks)
+      result+=stm.toStringWithoutFeatures
+    return result
+  }
+
   override def printKillGen:String = {
     var result:String = ""
     for(stm<-blocks) {
@@ -268,4 +273,80 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
     }
   }
 
+  override def setFeaturesTrue {
+    for(stm <- stmList)
+      stm.entry.setFeaturesTrue
+  }
+
+  override def filterAeEntry(toFilter:List[AbstractSyntaxTree]) {
+      for(stm<-stmList)
+        stm.entry.filterAeEntry(toFilter)
+    }
+
+  override def filterAeExit(toFilter:List[AbstractSyntaxTree]) {
+      for(stm<-stmList)
+        stm.entry.filterAeExit(toFilter)
+    }
+
+  override def filterBlocks(toFilter:List[Opt[AbstractSyntaxTree]]) {
+      var newBlocks:Set[AbstractSyntaxTree] = Set.empty
+      for(stm<-stmList){
+        stm.entry.filterBlocks(toFilter)
+        newBlocks++=stm.entry.getBlocks
+      }
+      blocks = newBlocks
+    }
+
+  def generateFilterFlow(toFilter:List[Opt[AbstractSyntaxTree]]):List[AbstractSyntaxTree] = {
+      var filter:List[AbstractSyntaxTree] = List.empty
+      for(stm<-toFilter){
+        var temp = stm.entry
+        temp match{
+          case temp:Ifelse =>
+            filter = filter.::(temp.condition)
+            filter = filter.:::(temp.thenBranch.generateFilterFlow(temp.thenBranch.stmList))
+            filter = filter.:::(temp.elseBranch.generateFilterFlow(temp.elseBranch.stmList))
+          case temp:WhileStatement =>
+            filter = filter.::(temp.condition)
+            filter = filter.:::(temp.doBranch.generateFilterFlow(temp.doBranch.stmList))
+          case temp:Program => {}
+          case _ =>
+            filter = filter.::(temp)
+        }
+      }
+    return filter
+  }
+
+
+    def filterFlow(toFilter:List[Opt[AbstractSyntaxTree]]) {
+      var newFlow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = Set.empty
+      var filter:List[AbstractSyntaxTree] = generateFilterFlow(toFilter)
+      for((from,to)<-flow){
+        if(filter.contains(from) && filter.contains(to)){
+        val nextNode:AbstractSyntaxTree = getNodeByFeature(from)            //TODO ÜBER DEN FLU?GRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
+        if(nextNode != null && nextNode.getLabel.equals(to))
+            newFlow+=((from,to))
+        }
+      }
+      flow=newFlow
+    }
+
+  override def filterGen(toFilter:List[AbstractSyntaxTree]) {
+      for(stm<-blocks)
+        stm.filterGen(toFilter)
+    }
+
+  override def filterKill(toFilter:List[AbstractSyntaxTree]) {
+      for(stm<-blocks)
+        stm.filterKill(toFilter)
+    }
+
+
+  def compareFlow(flowOne:Set[(AbstractSyntaxTree,AbstractSyntaxTree)], flowTwo:Set[(AbstractSyntaxTree, AbstractSyntaxTree)]) : Boolean = {
+    for(tupelOne <- flowOne){
+      if(!flowTwo.toString.contains(tupelOne.toString))
+        return false
+    }
+    return true
+  }
 }

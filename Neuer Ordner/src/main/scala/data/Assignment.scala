@@ -15,8 +15,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 class Assignment(n: IdentExpression, exp: Expression) extends Statement {
 var name:IdentExpression = n
 var expression:Expression = exp
-
-  this.setLabel(this)
+setLabel(this)
 
 
 
@@ -98,7 +97,8 @@ override def killAE(caller:AbstractSyntaxTree) {
     return aeEntryUnionGen
   }
 
-  override def toString:String = "Ass["+name.toString+","+exp.toString+"]"+getLabel.feature.toString
+  override def toString:String = "Ass["+name.toString+","+expression.toString+"]"+getLabel.feature.toString
+  override def toStringWithoutFeatures:String = "Ass["+name.toString+","+expression.toString+"]"
 
   override def printKillGen:String = "\n"+getLabel+"Kill: "+kill.toString+"Gen: "+gen.toString
 

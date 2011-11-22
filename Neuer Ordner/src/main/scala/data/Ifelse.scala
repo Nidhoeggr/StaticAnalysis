@@ -1,6 +1,7 @@
 package data
 
 import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.conditional.Opt
 
 /**
  * Created by IntelliJ IDEA.
@@ -90,4 +91,41 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
       elseBranch.setFeatures(feature)
       this.label.feature = feature
     }
+
+    override def filterAeEntry(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterAeEntry(toFilter)
+      thenBranch.filterAeEntry(toFilter)
+      elseBranch.filterAeEntry(toFilter)
+    }
+
+    override def filterAeExit(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterAeExit(toFilter)
+      thenBranch.filterAeExit(toFilter)
+      elseBranch.filterAeExit(toFilter)
+    }
+
+    override def filterBlocks(toFilter:List[Opt[AbstractSyntaxTree]]) {
+      condition.filterBlocks(toFilter)
+      thenBranch.filterBlocks(toFilter)
+      elseBranch.filterBlocks(toFilter)
+    }
+
+    override def filterGen(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterGen(toFilter)
+      thenBranch.filterGen(toFilter)
+      elseBranch.filterGen(toFilter)
+    }
+
+    override def filterKill(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterKill(toFilter)
+      thenBranch.filterKill(toFilter)
+      elseBranch.filterKill(toFilter)
+    }
+
+  override def setFeaturesTrue {
+    condition.setFeaturesTrue
+    thenBranch.setFeaturesTrue
+    elseBranch.setFeaturesTrue
+  }
+
 }

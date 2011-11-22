@@ -13,4 +13,5 @@ class ConditionGreater (a: IdentExpression, b: Expression) extends Condition {
   expression = b
 
   override def toString:String = "Gr["+variable.toString+","+expression.toString+"]"+feature.toString
+  override def toStringWithoutFeatures:String = "Gr["+variable.toString+","+expression.toString+"]"
 }

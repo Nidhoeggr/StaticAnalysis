@@ -13,4 +13,5 @@ class ConditionEquals(a: IdentExpression, b: Expression) extends Condition{
   expression = b
 
   override def toString:String = "Eq["+variable.toString+","+expression.toString+"]"+feature.toString
+  override def toStringWithoutFeatures:String = "Eq["+variable.toString+","+expression.toString+"]"
 }

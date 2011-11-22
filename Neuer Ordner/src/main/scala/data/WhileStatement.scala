@@ -73,4 +73,35 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
     doBranch.setFeatures(feature)
     this.label.feature = feature
   }
+
+   override def filterAeEntry(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterAeEntry(toFilter)
+      doBranch.filterAeEntry(toFilter)
+    }
+
+    override def filterAeExit(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterAeExit(toFilter)
+      doBranch.filterAeExit(toFilter)
+    }
+
+    override def filterBlocks(toFilter:List[Opt[AbstractSyntaxTree]]) {
+      condition.filterBlocks(toFilter)
+      doBranch.filterBlocks(toFilter)
+    }
+
+    override def filterGen(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterGen(toFilter)
+      doBranch.filterGen(toFilter)
+    }
+
+    override def filterKill(toFilter:List[AbstractSyntaxTree]) {
+      condition.filterKill(toFilter)
+      doBranch.filterKill(toFilter)
+    }
+
+  override def setFeaturesTrue {
+    condition.setFeaturesTrue
+    doBranch.setFeaturesTrue
+  }
+
 }

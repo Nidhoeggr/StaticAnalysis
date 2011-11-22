@@ -211,6 +211,7 @@ class TestRunner {
              """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
 
 
  }
@@ -228,6 +229,7 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
+             automaticTest(code)
   }
 
   @Test
@@ -244,6 +246,7 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
+           automaticTest(code)
   }
 
   @Test
@@ -266,6 +269,7 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
   }
 
   @Test
@@ -285,6 +289,7 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
   }
 
 
@@ -299,6 +304,7 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
                 assert(prog.printFlow.isEmpty)
                 assert(prog.printAE.equals("\nAss[x,3]def(X) AEentry: Set() AEexit: Set(3)"))
                 assert(prog.printKillGen.equals("\nAss[x,3]def(X)Kill: Set()Gen: Set(3)"))
@@ -315,6 +321,7 @@ class TestRunner {
              """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
                   assert(prog.printFlow.equals("(Ass[a,Add[b,c]]True,Ass[c,a]True)\n"))
                   assert(prog.printAE.equals("\nAss[a,Add[b,c]]True AEentry: Set() AEexit: Set(Add[b,c])\nAss[c,a]True AEentry: Set(Add[b,c]) AEexit: Set(a)"))
                   assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]TrueKill: Set(a)Gen: Set(Add[b,c])\nAss[c,a]TrueKill: Set(Add[b,c])Gen: Set(a)"))
@@ -333,6 +340,7 @@ class TestRunner {
              """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
                   assert(prog.printFlow.equals("(Gr[x,c]True,Ass[a,Add[b,c]]True)\n(Ass[c,Add[c,1]]True,Gr[x,c]True)\n(Ass[a,Add[b,c]]True,Ass[c,Add[c,1]]True)\n"))
                   assert(prog.printAE.equals("\nGr[x,c]True AEentry: Set() AEexit: Set(c)\nAss[a,Add[b,c]]True AEentry: Set(c) AEexit: Set(c, Add[b,c])\nAss[c,Add[c,1]]True AEentry: Set(c, Add[b,c]) AEexit: Set()"))
                   assert(prog.printKillGen.equals("\nGr[x,c]TrueKill: Set()Gen: Set(c)\nAss[a,Add[b,c]]TrueKill: Set()Gen: Set(Add[b,c])\nAss[c,Add[c,1]]TrueKill: Set(c, Add[b,c], Add[c,1])Gen: Set()"))
@@ -353,6 +361,7 @@ class TestRunner {
              """
 
            val prog:Program = runTest(code)
+             automaticTest(code)
                   assert(prog.printFlow.equals("(Gr[a,Mul[b,c]]True,Ass[b,c]True)\n(Gr[a,Mul[b,c]]True,Ass[b,a]True)\n(Ass[b,c]True,Ass[c,3]True)\n(Ass[b,a]True,Ass[c,3]True)\n"))
                   assert(prog.printAE.equals("\nGr[a,Mul[b,c]]True AEentry: Set() AEexit: Set(Mul[b,c])\nAss[b,c]True AEentry: Set(Mul[b,c]) AEexit: Set(c)\nAss[b,a]True AEentry: Set(Mul[b,c]) AEexit: Set(a)\nAss[c,3]True AEentry: Set() AEexit: Set(3)"))
                   assert(prog.printKillGen.equals("\nGr[a,Mul[b,c]]TrueKill: Set()Gen: Set(Mul[b,c])\nAss[b,c]TrueKill: Set(Mul[b,c])Gen: Set(c)\nAss[b,a]TrueKill: Set(Mul[b,c])Gen: Set(a)\nAss[c,3]TrueKill: Set(Mul[b,c], c)Gen: Set(3)"))
@@ -373,6 +382,7 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
+             automaticTest(code)
                 assert(prog.printFlow.equals("(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Gr[a,e]True,Ass[c,Add[a,b]]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n(Ass[c,Add[a,b]]True,Ass[d,c]True)\n"))
                 assert(prog.printAE.equals("\nGr[a,e]True AEentry: Set() AEexit: Set(e)\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[c,Add[a,b]]True AEentry: Set(e) AEexit: Set(e, Add[a,b])\nAss[d,c]True AEentry: Set(e) AEexit: Set(e, c)"))
                 assert(prog.printKillGen.equals("\nGr[a,e]TrueKill: Set()Gen: Set(e)\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[c,Add[a,b]]TrueKill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
@@ -394,6 +404,7 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
+            automaticTest(code)
                 assert(prog.printFlow.equals("(Ass[c,Sub[a,b]]def(x),Ass[d,c]True)\n(Ass[c,Add[a,b]]!def(x),Ass[d,c]True)\n"))
                 assert(prog.printAE.equals("\nAss[c,Sub[a,b]]def(x) AEentry: Set() AEexit: Set(Sub[a,b])\nAss[c,Add[a,b]]!def(x) AEentry: Set() AEexit: Set(Add[a,b])\nAss[d,c]True AEentry: Set(Add[a,b], Sub[a,b]) AEexit: Set(Add[a,b], Sub[a,b], c)"))
                 assert(prog.printKillGen.equals("\nAss[c,Sub[a,b]]def(x)Kill: Set(c)Gen: Set(Sub[a,b])\nAss[c,Add[a,b]]!def(x)Kill: Set(c)Gen: Set(Add[a,b])\nAss[d,c]TrueKill: Set()Gen: Set(c)"))
@@ -411,6 +422,7 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
+            automaticTest(code)
                 assert(prog.printFlow.equals("(Ass[c,Mul[d,Div[f,abc]]]True,Ass[d,1]True)\n"))
                 assert(prog.printAE.equals("\nAss[c,Mul[d,Div[f,abc]]]True AEentry: Set() AEexit: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]True AEentry: Set(Div[f,abc], Mul[d,Div[f,abc]]) AEexit: Set(Div[f,abc], 1)"))
                 assert(prog.printKillGen.equals("\nAss[c,Mul[d,Div[f,abc]]]TrueKill: Set()Gen: Set(Div[f,abc], Mul[d,Div[f,abc]])\nAss[d,1]TrueKill: Set(Mul[d,Div[f,abc]])Gen: Set(1)"))
@@ -550,6 +562,7 @@ class TestRunner {
            """
 
     val prog:Program = runTest(code)
+    automaticTest(code)
     assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
     assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
     assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
@@ -573,6 +586,7 @@ class TestRunner {
            """
 
     val prog:Program = runTest(code)
+    automaticTest(code)
     assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(Y))\n(Ass[a,Sub[b,c]]!def(X),Ass[a,Mul[b,c]]def(Y))\n"))
     assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[a,Sub[b,c]]!def(X) AEentry: Set() AEexit: Set(Sub[b,c])\nAss[a,Mul[b,c]]def(Y) AEentry: Set(Sub[b,c], Add[b,c]) AEexit: Set(Sub[b,c], Add[b,c], Mul[b,c])"))
     assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[a,Sub[b,c]]!def(X)Kill: Set()Gen: Set(Sub[b,c])\nAss[a,Mul[b,c]]def(Y)Kill: Set()Gen: Set(Mul[b,c])"))
@@ -595,33 +609,8 @@ class TestRunner {
            //#endif
            }end
            """
-
-    println("########################################################################################")
-    val prog:Program = runTestWithoutAnalysis(code)
-    val prog1:Program = runTest(code)
-    println("########################################################################################")
-    val test:List[List[Opt[AbstractSyntaxTree]]] = explodeVae(prog.stmList)
-    for(x:List[Opt[AbstractSyntaxTree]] <- test){
-      if(!x.isEmpty){
-        var progTest:Program = new Program(x)
-        progTest = aeAnalysis(progTest)
-        output(progTest)
-        println("########################################################################################")
-      }
-    }
-    val prog2:List[Program] = explodeAnalyse(prog1)
-    println("##############################################################################################" +
-      "####################################################################################################")
-    for(x:Program <- prog2){
-      output(x)
-      println("##########################################################################")
-    }
-//    assert(prog.printFlow.equals("(Ass[a,Add[b,c]]def(X),Ass[a,Mul[b,c]]def(X))\n(Ass[b,Div[e,f]](def(Y)&def(X)),Ass[b,Sub[e,f]](def(Y)&def(X)))\n(Ass[a,Add[b,c]]def(X),Ass[b,Div[e,f]](def(Y)&def(X)))\n(Ass[b,Sub[e,f]](def(Y)&def(X)),Ass[a,Mul[b,c]]def(X))\n"))
-//    assert(prog.printAE.equals("\nAss[a,Add[b,c]]def(X) AEentry: Set() AEexit: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X)) AEentry: Set(Add[b,c]) AEexit: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X)) AEentry: Set(Div[e,f]) AEexit: Set(Div[e,f], Sub[e,f])\nAss[a,Mul[b,c]]def(X) AEentry: Set(Div[e,f], Sub[e,f], Add[b,c]) AEexit: Set(Div[e,f], Sub[e,f], Add[b,c], Mul[b,c])"))
-//    assert(prog.printKillGen.equals("\nAss[a,Add[b,c]]def(X)Kill: Set()Gen: Set(Add[b,c])\nAss[b,Div[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Div[e,f])\nAss[b,Sub[e,f]](def(Y)&def(X))Kill: Set(Add[b,c], Mul[b,c])Gen: Set(Sub[e,f])\nAss[a,Mul[b,c]]def(X)Kill: Set()Gen: Set(Mul[b,c])"))
-
-
-}
+    automaticTest(code)
+  }
 
 
   @Test
@@ -646,8 +635,28 @@ class TestRunner {
            """
 
     val prog:Program = runTest(code)
+    automaticTest(code)
 
 }
+
+
+  def automaticTest(code:String) {
+    val prog:Program = runTestWithoutAnalysis(code)
+    val prog1:Program = runTest(code)
+    val prog2:List[Program] = explodeAnalyse(prog1)
+    val test:List[List[Opt[AbstractSyntaxTree]]] = explodeVae(prog.stmList)
+    for(x:List[Opt[AbstractSyntaxTree]] <- test){
+      if(!x.isEmpty){
+        var progTest:Program = new Program(x)
+        progTest = aeAnalysis(progTest)
+        assert(check(progTest, prog2, "aeEntry") &&
+               check(progTest, prog2, "aeExit")  &&
+               check(progTest, prog2, "gen")     &&
+               check(progTest, prog2, "kill")    &&
+               check(progTest, prog2, "flow"))
+      }
+    }
+  }
 
 
   def runTest(code:String):Program =  {
@@ -688,7 +697,6 @@ class TestRunner {
     prog.genAE
     prog.killAE(prog)
     var counter:Int = 0
-
     while(counter<10){
       prog.calculateAEentry(prog)
       prog.calculateAEexit(prog)
@@ -776,11 +784,116 @@ class TestRunner {
     for(featureList:List[FeatureExpr] <- allFeatures){
       val tmp = configureAST(program.stmList, featureList, true)
       if(!tmp.isEmpty){
-        exploded = exploded.::(new Program(tmp.toList))     //TODO hier wird ein neues Program erzeugt, daher werden die alten sachen gelöscht. Hier darf ich die einträge nicht löschen, sondern muß sie übernehmen. Methode nötig, um die einträge des alten programs zu verändern in abhängigkeit von den feature-permutationen
+        exploded = exploded.::(configProgram(program, new Program(tmp.toList)))
       }
     }
     return exploded
   }
 
+  def configProgram(analysis:Program, result:Program):Program = {
+    result.setFeaturesTrue
+    analysis.setFeaturesTrue
+    result.flow=analysis.flow
+    result.generateBlocks
+    result.filterBlocks(result.stmList)
+    result.generateAllExpressions
+    val stmToFilter:List[AbstractSyntaxTree] = result.getAllExpressions.toList
+    result.filterAeEntry(stmToFilter)
+    result.filterAeExit(stmToFilter)
+    //result.allExpressions = filterAllExpressions(analysis.allExpressions, stmToFilter)
+    //result.exitNodes = filter(analysis.exitNodes, stmToFilter)
+    result.filterGen(stmToFilter)
+    result.filterKill(stmToFilter)
+    result.filterFlow(result.stmList)
+    return result
+  }
+/*
+  def filterFlow(actual:Set[(AbstractSyntaxTree,AbstractSyntaxTree)], toFilter:List[Opt[AbstractSyntaxTree]]):Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = {
+    var result:Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = Set.empty
+    for((a,b) <- actual){
+      for(stm:Opt[AbstractSyntaxTree] <- toFilter){
+        if(a.getLabel.equals(stm.entry.getLabel))
+          for(stm2:Opt[AbstractSyntaxTree] <- toFilter){
+            if(b.getLabel.equals(stm2.entry.getLabel))
+              result+=((a,b))
+          }
+      }
+    }
+    return result
+  }
+*/
+  def filterAllExpressions(actual:Set[Expression], toFilter:List[Opt[AbstractSyntaxTree]]):Set[Expression] = {
+    var result:Set[Expression] = Set.empty
+    for(expr:Expression <- actual){
+      if(toFilter.contains(expr))
+        result+=expr
+    }
+    return result
+  }
 
+  def checkAnalysis(check:Program, checkAgainst:List[Program]):Boolean = {
+    var namesCheck:String = check.toStringWithoutFeatures
+    var namesCheckAgainst:String = ""
+    var toKillEntry:Set[AbstractSyntaxTree] = check.aeEntry
+    var toKillExit:Set[AbstractSyntaxTree] = check.aeExit
+    for(progToCheckAgainst:Program <- checkAgainst){
+      if(namesCheck.equals(progToCheckAgainst.toStringWithoutFeatures)){
+        for(ae <- progToCheckAgainst.getLabel.aeEntry){
+          for(ae2 <- check.getLabel.aeEntry){
+            if(ae.toStringWithoutFeatures.equals(ae2.toStringWithoutFeatures)){
+              toKillEntry.-(ae2)
+            }
+          }
+        for(ae <- progToCheckAgainst.getLabel.aeExit){
+          for(ae2 <- check.getLabel.aeExit){
+            if(ae.toStringWithoutFeatures.equals(ae2.toStringWithoutFeatures)){
+              toKillExit.-(ae2)
+            }
+          }
+        }
+        }
+      }
+    }
+    if(toKillEntry.isEmpty && toKillExit.isEmpty)
+      return true
+    return false
+  }
+
+  def check(check:Program, checkAgainstList:List[Program], toCheck:String):Boolean = {
+    for(stm:Opt[AbstractSyntaxTree] <- check.stmList){
+      for(prog:Program <- checkAgainstList){
+        for(stm2:Opt[AbstractSyntaxTree] <- prog.stmList){
+          toCheck match{
+            case "aeEntry" =>
+              if(checkSet(stm.entry.aeEntry, stm2.entry.aeEntry)){
+                return true
+              }
+            case "aeExit" =>
+              if(checkSet(stm.entry.aeExit, stm2.entry.aeExit)){
+                return true
+              }
+            case "gen" =>
+              if(checkSet(stm.entry.gen, stm2.entry.gen)){
+                return true
+              }
+            case "kill" =>
+              if(checkSet(stm.entry.aeEntry, stm2.entry.aeEntry)) {
+                return true
+              }
+            case "flow" =>
+              if(check.compareFlow(check.flow, prog.flow))
+                return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  def checkSet(check:Set[AbstractSyntaxTree], checkAgainst:Set[AbstractSyntaxTree]):Boolean = {
+    if(check.toString.equals(checkAgainst.toString)){
+      return true
+    }
+    return false
+  }
 }

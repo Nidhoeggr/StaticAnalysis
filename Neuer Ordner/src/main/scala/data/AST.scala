@@ -35,7 +35,6 @@ var gen : Set[AbstractSyntaxTree] = Set.empty
 var kill : Set[AbstractSyntaxTree] = Set.empty
 var blocks:Set[AbstractSyntaxTree] =Set.empty
 var number:Int = AbstractSyntaxTree.incNumber
-
 var allExpressions:Set[Expression] = Set.empty
 
 def getAllExpressions = allExpressions
@@ -54,6 +53,7 @@ def genAE{}
 def killAE(caller:AbstractSyntaxTree){}
 def calculateFlowGraph()
 def generateBlocks
+def toStringWithoutFeatures:String = toString
 def calculateAEentry(prog:Program):Set[AbstractSyntaxTree] = Set.empty
 def calculateAEexit(prog:Program):Set[AbstractSyntaxTree] = Set.empty
 
@@ -253,7 +253,6 @@ def printAE:String = ""
       cloned.flow = Set.empty
       cloned.gen = Set.empty
       cloned.initNodes = Set.empty
-      cloned.label = toClone.label
       cloned.kill = Set.empty
       cloned.number = toClone.number
       cloned.range = toClone.range
@@ -311,11 +310,63 @@ def printAE:String = ""
       cloned.flow = toClone.flow
       cloned.gen = toClone.gen
       cloned.initNodes = toClone.initNodes
-      cloned.label = toClone.label
       cloned.kill = toClone.kill
       cloned.number = toClone.number
       cloned.range = toClone.range
     return cloned
 
   }
+
+    def filterAeEntry(toFilter:List[AbstractSyntaxTree]) {
+      var newAeEntry:Set[AbstractSyntaxTree] = Set.empty
+      for(stm <- toFilter){
+        if(aeEntry.contains(stm)){
+          newAeEntry+=stm
+        }
+      }
+      aeEntry=newAeEntry
+    }
+
+    def filterAeExit(toFilter:List[AbstractSyntaxTree]) {
+      var newAeExit:Set[AbstractSyntaxTree] = Set.empty
+      for(stm <- toFilter){
+        if(aeExit.contains(stm)){
+          newAeExit+=stm
+        }
+      }
+      aeExit=newAeExit
+    }
+
+    def filterBlocks(toFilter:List[Opt[AbstractSyntaxTree]]) {
+      var newBlocks:Set[AbstractSyntaxTree] = Set.empty
+      for(stm <- toFilter){
+        if(blocks.contains(stm.entry)){
+          newBlocks+=stm.entry
+        }
+      }
+      blocks=newBlocks
+    }
+
+    def filterGen(toFilter:List[AbstractSyntaxTree]) {
+      var newGen:Set[AbstractSyntaxTree] = Set.empty
+      for(stm <- toFilter){
+        if(gen.contains(stm)){
+          newGen+=stm
+        }
+      }
+      gen=newGen
+    }
+
+    def filterKill(toFilter:List[AbstractSyntaxTree]) {
+      var newKill:Set[AbstractSyntaxTree] = Set.empty
+      for(stm <- toFilter){
+        if(kill.contains(stm)){
+          newKill+=stm
+        }
+      }
+      kill=newKill
+    }
+
+  def setFeaturesTrue { feature=de.fosd.typechef.featureexpr.True  }
+
 }
