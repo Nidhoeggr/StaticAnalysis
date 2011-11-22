@@ -323,7 +323,7 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
       var filter:List[AbstractSyntaxTree] = generateFilterFlow(toFilter)
       for((from,to)<-flow){
         if(filter.contains(from) && filter.contains(to)){
-        val nextNode:AbstractSyntaxTree = getNodeByFeature(from)            //TODO ÜBER DEN FLU?GRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
+        val nextNode:AbstractSyntaxTree = getNodeByFeature(from)            //TODO ÜBER DEN FLUssGRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
         if(nextNode != null && nextNode.getLabel.equals(to))
             newFlow+=((from,to))
         }
