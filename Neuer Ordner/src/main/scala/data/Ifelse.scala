@@ -123,6 +123,7 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
     }
 
   override def setFeaturesTrue {
+    label.setFeaturesTrue
     condition.setFeaturesTrue
     thenBranch.setFeaturesTrue
     elseBranch.setFeaturesTrue

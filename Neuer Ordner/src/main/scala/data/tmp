@@ -213,7 +213,6 @@ class TestRunner {
            val prog:Program = runTest(code)
              automaticTest(code)
 
-
  }
 
   @Test
@@ -448,6 +447,7 @@ class TestRunner {
            """
 
            val prog:Program = runTest(code)
+           automaticTest(code)
 
 }
 
@@ -484,6 +484,7 @@ class TestRunner {
            """
 
             val prog:Program = runTest(code)
+            automaticTest(code)
 
 }
 
@@ -512,6 +513,7 @@ class TestRunner {
            """
 
             runTest(code)
+            automaticTest(code)
 
 }
 
@@ -542,6 +544,7 @@ class TestRunner {
            """
 
             runTest(code)
+            automaticTest(code)
 
 }
 
@@ -649,6 +652,7 @@ class TestRunner {
       if(!x.isEmpty){
         var progTest:Program = new Program(x)
         progTest = aeAnalysis(progTest)
+        progTest.setFeaturesTrue
         assert(check(progTest, prog2, "aeEntry") &&
                check(progTest, prog2, "aeExit")  &&
                check(progTest, prog2, "gen")     &&
@@ -724,8 +728,8 @@ class TestRunner {
   /**
    * Setzt alle Features eines AST auf true, die äquivalent zu dem angegebenen Feature sind. Löscht den Rest. Der übergebene AST wird nicht verändert.
    */
-  def configureAST(ast:List[Opt[AbstractSyntaxTree]],featureList:List[FeatureExpr], extended:Boolean): Set[Opt[AbstractSyntaxTree]] = {
-    var resultAST:Set[Opt[AbstractSyntaxTree]] = Set.empty
+  def configureAST(ast:List[Opt[AbstractSyntaxTree]],featureList:List[FeatureExpr], extended:Boolean): List[Opt[AbstractSyntaxTree]] = {
+    var resultAST:List[Opt[AbstractSyntaxTree]] = List.empty
     var tmp:FeatureExpr = de.fosd.typechef.featureexpr.True
     for(f<-featureList){
       tmp = tmp.and(f)
@@ -740,11 +744,12 @@ class TestRunner {
             cloned = stm.copy(de.fosd.typechef.featureexpr.True, stm.entry.copyExtended)
           else
             cloned = stm.copy(de.fosd.typechef.featureexpr.True, stm.entry.copy)
-          resultAST+=cloned
+          if(!resultAST.contains(cloned))
+            resultAST=resultAST.::(cloned)
         }
       }
     }
-    return resultAST
+    return resultAST.reverse      //Richtige Reihenfolge wieder herstellen
   }
 
   /**
@@ -753,7 +758,8 @@ class TestRunner {
   def generateAllFeatures(ast:List[Opt[AbstractSyntaxTree]]) : List[List[FeatureExpr]] = {
     var allFeatures:Set[FeatureExpr] = Set.empty
     for(stm:Opt[AbstractSyntaxTree]<-ast){
-      allFeatures += stm.feature
+      if(stm.feature != de.fosd.typechef.featureexpr.True)
+        allFeatures += stm.feature
     }
     var result:List[List[FeatureExpr]] = List.empty
     for(x <- 1 to allFeatures.size){
@@ -769,8 +775,8 @@ class TestRunner {
     var exploded:List[List[Opt[AbstractSyntaxTree]]] = List(List.empty)
     val allFeatures:List[List[FeatureExpr]] = generateAllFeatures(ast)
     for(featureList:List[FeatureExpr] <- allFeatures){
-      val configuredAST:Set[Opt[AbstractSyntaxTree]] = configureAST(ast, featureList, false)
-      exploded = exploded ::: List(configuredAST.toList)
+      val configuredAST:List[Opt[AbstractSyntaxTree]] = configureAST(ast, featureList, false)
+      exploded = exploded ::: List(configuredAST)
     }
     return exploded
   }

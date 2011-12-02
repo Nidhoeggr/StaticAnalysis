@@ -108,7 +108,7 @@ def addFlow(from:AbstractSyntaxTree, to:AbstractSyntaxTree) {
   from match{
     case from:Ifelse =>
       for(x<-from.getExitNodes)              //da bei ifelse nicht das label, sondern die exitnodes der Branches verknüpft werden dürfen
-        flow+=((x,to.getLabel))
+        flow+=((x.getLabel,to.getLabel))
     case _ =>
        flow+=((from.getLabel,to.getLabel))
   }
@@ -368,5 +368,88 @@ def printAE:String = ""
     }
 
   def setFeaturesTrue { feature=de.fosd.typechef.featureexpr.True  }
+
+  def findNode(statement:AbstractSyntaxTree, stmList:List[Opt[AbstractSyntaxTree]]):Iterator[Opt[AbstractSyntaxTree]] = {
+    if(stmList.isEmpty)
+      return null
+    var iterator:Iterator[Opt[AbstractSyntaxTree]] = stmList.iterator
+    var stm:Opt[AbstractSyntaxTree] = stmList.head
+    while(!stm.entry.getLabel.equals(statement)){
+      if(!iterator.hasNext){
+        return null
+      }
+      stm = iterator.next
+      var stmEntry:AbstractSyntaxTree = stm.entry
+      stmEntry match{
+        case stmEntry:Assignment => {}
+
+        case stmEntry:Ifelse =>
+          if(stmEntry.condition.equals(statement))
+            return iterator
+          val result = findNode(statement, stmEntry.thenBranch.stmList)
+          if(result != null)
+            return result
+          else{
+            val  result = findNode(statement, stmEntry.elseBranch.stmList)
+            return result
+          }
+
+        case stmEntry:WhileStatement =>
+          if(stmEntry.condition.equals(statement))
+            return iterator
+          val result = findNode(statement, stmEntry.doBranch.stmList)
+          return result
+
+        case _ => {}
+      }
+    }
+    return iterator
+  }
+
+  def nextNode(statement:AbstractSyntaxTree, stmList:List[Opt[AbstractSyntaxTree]]):AbstractSyntaxTree = {
+    var iterator:Iterator[Opt[AbstractSyntaxTree]] = findNode(statement, stmList)
+    if(iterator==null)
+      return null
+    var result:AbstractSyntaxTree = null
+    var afterStm:Opt[AbstractSyntaxTree] = null
+
+    while(iterator.hasNext){
+      afterStm = iterator.next
+      afterStm match{
+        case afterStm:Opt[Assignment] =>
+          if(afterStm.entry.equals(statement))
+            return afterStm.entry
+
+        case afterStm:Opt[Ifelse] =>
+          result = nextNode(statement, afterStm.entry.thenBranch.stmList)
+          if(result != null)
+            return result
+          else{
+            result = nextNode(statement, afterStm.entry.elseBranch.stmList)
+            return result
+          }
+
+        case afterStm:Opt[WhileStatement] =>
+          result = nextNode(statement, afterStm.entry.doBranch.stmList)
+          return result
+      }
+    }
+    return result
+  }
+
+  def nextNodeSimple(statement:AbstractSyntaxTree, flow:Set[(AbstractSyntaxTree, AbstractSyntaxTree)]):AbstractSyntaxTree = {
+    var lastTo:AbstractSyntaxTree = null
+    for((from:AbstractSyntaxTree,to:AbstractSyntaxTree)<-flow.toList){
+      if(from.equals(statement)){
+        if(lastTo==null)
+          lastTo=to
+        else
+          if(to.getPositionFrom.getLine < lastTo.getPositionFrom.getLine)
+            lastTo = to
+      }
+
+    }
+    return lastTo
+  }
 
 }

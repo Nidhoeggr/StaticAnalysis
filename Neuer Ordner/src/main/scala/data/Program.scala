@@ -28,7 +28,7 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
           feature match{
             case de.fosd.typechef.featureexpr.True => {
               stm.entry.calculateFlowGraph()
-               if(oldStm!=null){//} && oldDefStmThen == null && oldDefStm == null){
+               if(oldStm!=null && flowPossible(stm.entry)){//} && oldDefStmThen == null && oldDefStm == null){
                  if(oldStm.getExitNodes.isEmpty)
                     addFlow(oldStm,stm.entry)
                  for(node<-oldStm.getExitNodes)
@@ -53,6 +53,7 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
             }
             case _ =>  {     //Optinaler Knoten
               stm.entry.calculateFlowGraph()
+              addSubFlow(stm.entry.getFlow)
 /*
               val nextNodeWithSameFeature = getNodeByFeature(stm.entry)
               val nextNodeWithContradictionFeature = getNodeByContraFeature(stm.entry)
@@ -77,6 +78,18 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
               }
               addSubFlow(stm.entry.getFlow)
 */
+              if(oldStm != null && oldStm.feature.and(stm.feature).isSatisfiable()){
+                if(flowPossible(stm.entry)){
+                  var foundOtherPath:Boolean = false
+                  for((x,y)<-flow){
+                    if(x.equals(oldStm) && y.feature.equals(stm.entry.feature))
+                      foundOtherPath=true
+                  }
+                if(!foundOtherPath)
+                  addFlow(oldStm, stm.entry)
+                }else
+                  oldStm = null
+              }
               var nextNodeWithSameFeature = getNodeByFeature(stm.entry)
               if(nextNodeWithSameFeature != null){
                 addFlow(stm.entry, nextNodeWithSameFeature)       //Kante zum nächsten Knoten mit dem selben Feature
@@ -113,6 +126,19 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
       }
     }
     return null
+  }
+
+  def flowPossible(targetNode:AbstractSyntaxTree):Boolean = {
+    for((from,to)<-this.flow){
+      if(targetNode.equals(to)){
+        for((fromTmp,toTmp)<-this.flow){
+          if(toTmp.equals(targetNode) && !from.equals(fromTmp) && from.getLabel.feature.and(fromTmp.getLabel.feature).isContradiction()){    //Falls es Kanten von !X und X Knoten gibt, dann darf es keine weitere Kante mehr von einem gleichen Knoten (zb true) geben
+            return false
+          }
+        }
+      }
+    }
+    return true
   }
 
   def getSatisfiableNodeByFeature(node:AbstractSyntaxTree):AbstractSyntaxTree = {
@@ -322,14 +348,21 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
       var newFlow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = Set.empty
       var filter:List[AbstractSyntaxTree] = generateFilterFlow(toFilter)
       for((from,to)<-flow){
-        if(filter.contains(from) && filter.contains(to)){
-        val nextNode:AbstractSyntaxTree = getNodeByFeature(from)            //TODO ÜBER DEN FLUssGRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
-        if(nextNode != null && nextNode.getLabel.equals(to))
-            newFlow+=((from,to))
-        }
+//        val allPathsFrom:Set[(AbstractSyntaxTree,AbstractSyntaxTree)]
+        if(filter.contains(from.getLabel) && filter.contains(to.getLabel))
+          newFlow+=((from,to))
+//          for((from2,to2)<-flow){
+//            if(filter.contains(to2) && from.equals(from2))
+//              allPathsFrom+=((from2,to2))
+//          }
+       // val naechsteNode:AbstractSyntaxTree = nextNodeSimple(from, flow)//getNodeByFeature(from)            //TODO ÜBER DEN FLUßGRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
+        //if(naechsteNode != null && naechsteNode.equals(to))
+        //    newFlow+=((from,to))
       }
       flow=newFlow
     }
+
+
 
   override def filterGen(toFilter:List[AbstractSyntaxTree]) {
       for(stm<-blocks)
