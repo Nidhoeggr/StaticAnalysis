@@ -5,7 +5,7 @@ import de.fosd.typechef.parser.java15.TokenWrapper
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:07
  * To change this template use File | Settings | File Templates.

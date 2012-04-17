@@ -7,7 +7,7 @@ import collection.mutable.Map
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 21.09.11
  * Time: 16:26
  * To change this template use File | Settings | File Templates.
@@ -101,9 +101,6 @@ def setFlow(flow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)]) {
         this.flow = flow
 }
 
-  /**
-   * From sollte
-   */
 def addFlow(from:AbstractSyntaxTree, to:AbstractSyntaxTree) {
   from match{
     case from:Ifelse =>
@@ -121,7 +118,17 @@ def addSubFlow(subFlow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)]) {
 def getFlow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = flow
 
 def setLabel(node:AbstractSyntaxTree) {
-        label = node
+  node match{
+    case node : WhileStatement =>
+      label = node.condition
+    case node : Ifelse =>
+      label = node.condition
+    case node : Program =>
+      node.setLabel(node.stmList.head.entry)
+      label = node.getLabel
+    case _ =>
+      label = node
+  }
 }
 
 def getLabel:AbstractSyntaxTree = label
@@ -160,14 +167,14 @@ def printAE:String = ""
     var feature:FeatureExpr = null
     for(stm <- allStm){
       if(stm.entry.getLabel.feature.equivalentTo(from.getLabel.feature)){
-          result+=((from,stm.entry))
+          result+=((from,stm.entry.getLabel))
           return result
       }else{
           if(feature!=null){                                            //erste Iteration abfangen
             if(!feature.equivalentTo(stm.entry.getLabel.feature))       //Nur eine Kante pro gleichem Statement (nicht weiter in die Sequenz verweisen)
-              result+=((from,stm.entry))
+              result+=((from,stm.entry.getLabel))
           }else{
-            result+=((from,stm.entry))
+            result+=((from,stm.entry.getLabel))
           }
           feature=stm.entry.getLabel.feature
       }
@@ -183,12 +190,12 @@ def printAE:String = ""
     var feature:FeatureExpr = null
     for(stm <- allStm.reverse){
       if(stm.entry.getLabel.feature.equivalentTo(to.getLabel.feature)){
-          result+=((stm.entry, to))
+          result+=((stm.entry.getLabel, to))
           return result
       }else{
         if(feature!=null){                                            //erste Iteration abfangen
           if(!feature.equivalentTo(stm.entry.getLabel.feature))       //Nur eine Kante pro gleichem Statement (nicht weiter in die Sequenz verweisen)
-            result+=((stm.entry, to))
+            result+=((stm.entry.getLabel, to))
         }else{
           result+=((stm.entry.getLabel, to))
         }
@@ -206,8 +213,8 @@ def printAE:String = ""
   /**
    * VORSICHT: die Methode ist keine deep-copy Methode, sondern eine Hilfsmethode für die Testinfrastruktur. Es wird eine spezielle Kopie für die Analyse erzeugt. Dabei werden
    * einige Felder zurückgesetzt und nicht kopiert.
-   * Erzeugt eine Kopie des AbstractSyntaxTrees auf dem die Methode gerufen wird.(Vorsicht auch Number wird kopiert auf der die Methode equals arbeitet). Vorsicht label wird nicht
-   * geclont.
+   * Erzeugt eine Kopie des AbstractSyntaxTrees auf dem die Methode gerufen wird.(Vorsicht auch Number wird kopiert auf der die Methode equals arbeitet).
+   * Vorsicht label wird nicht geklont.
    */
   def copy : AbstractSyntaxTree = {
     var cloned:AbstractSyntaxTree = null
@@ -264,7 +271,7 @@ def printAE:String = ""
    * VORSICHT: die Methode ist keine deep-copy Methode, sondern eine Hilfsmethode für die Testinfrastruktur. Es wird eine spezielle Kopie für die Analyse erzeugt. Dabei werden
    * einige Felder zurückgesetzt und nicht kopiert. In dieser Version hier werden AE relevante Felder nicht zurück gesetzt.
    * Erzeugt eine Kopie des AbstractSyntaxTrees auf dem die Methode gerufen wird.(Vorsicht auch Number wird kopiert auf der die Methode equals arbeitet). Vorsicht label wird nicht
-   * geclont.
+   * geklont.
    */
   def copyExtended : AbstractSyntaxTree = {
     var cloned:AbstractSyntaxTree = null

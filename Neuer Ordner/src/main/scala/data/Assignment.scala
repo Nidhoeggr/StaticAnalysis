@@ -6,7 +6,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:10
  * To change this template use File | Settings | File Templates.
@@ -113,18 +113,6 @@ override def killAE(caller:AbstractSyntaxTree) {
           allExpressions++=expression.getExpressions
       }
   }
-
-  /*
-  override def equals(x:Any):Boolean = {
-    x match{
-      case x:Assignment =>
-        return (this.name.toString.equals(x.name.toString) && this.expression.toString.equals(x.expression.toString) && this.feature.equivalentTo(x.feature))
-      case _ =>
-        return false
-    }
-
-  }
-  */
 
     override def setFeatures(feature:FeatureExpr){
       name.setFeatures(feature)

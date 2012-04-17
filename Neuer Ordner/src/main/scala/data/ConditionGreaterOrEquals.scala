@@ -2,7 +2,7 @@ package data
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:04
  * To change this template use File | Settings | File Templates.

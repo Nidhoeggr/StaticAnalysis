@@ -5,7 +5,7 @@ import java.io.FileReader
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 06.09.11
  * Time: 15:17
  * To change this template use File | Settings | File Templates.

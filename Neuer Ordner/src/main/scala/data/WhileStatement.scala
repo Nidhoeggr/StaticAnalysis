@@ -5,7 +5,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:14
  * To change this template use File | Settings | File Templates.
@@ -71,6 +71,7 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
 
   override def setFeatures(feature:FeatureExpr){
     doBranch.setFeatures(feature)
+    this.feature = feature
     this.label.feature = feature
   }
 
@@ -102,6 +103,7 @@ class WhileStatement(a: Condition, b: Program) extends Statement {
   override def setFeaturesTrue {
     condition.setFeaturesTrue
     doBranch.setFeaturesTrue
+    this.feature = de.fosd.typechef.featureexpr.True
   }
 
 }

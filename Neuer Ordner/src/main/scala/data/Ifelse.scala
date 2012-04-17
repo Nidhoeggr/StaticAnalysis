@@ -5,7 +5,7 @@ import de.fosd.typechef.conditional.Opt
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:10
  * To change this template use File | Settings | File Templates.
@@ -18,19 +18,11 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
   this.setLabel(condition)
 
   def calculateFlowGraph() {
-                            //  generateBlocks(stm)
-                              //condition.setInitNode(condition)
-                              //condition.setLabel(condition)
                               thenBranch.setExitNodes(thenBranch.calculateExitNodes)
                               elseBranch.setExitNodes(elseBranch.calculateExitNodes)
                               condition.setExitNodes(thenBranch.getExitNodes ++ elseBranch.getExitNodes)
-//                              addEdge(stm.getLabel, t.b.head.entry.getPositionFrom.getLine)
                               addSubFlow(calculateFlowWithOps(condition, thenBranch.stmList))
-                              //condition.addFlow(condition, thenBranch.stmList.head.entry)
-//                              addEdge(stm.getLabel, elseBranch.stmList.head.entry.getPositionFrom.getLine)    //Kante von der Condition zum ersten Eintrag des Elsebranchs
                               addSubFlow(calculateFlowWithOps(condition, elseBranch.stmList))
-                              //condition.addFlow(condition, elseBranch.stmList.head.entry)
-//                              addEdge(t.b.last.entry.getPositionFrom.getLine, e.b.last.entry.getPositionTo.getLine)     //Kante vom letzten Eintrag des Ifbranchs zum ersten Eintrag nach If Else
                               addInitNode(condition)
                               thenBranch.addInitNode(condition)
                               elseBranch.addInitNode(condition)
@@ -88,6 +80,7 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
     override def setFeatures(feature:FeatureExpr){
       condition.setFeatures(feature)
       thenBranch.setFeatures(feature)
+      this.feature = feature
       elseBranch.setFeatures(feature)
       this.label.feature = feature
     }
@@ -125,6 +118,7 @@ class Ifelse(cond: Condition, thenB: Program, elseB: Program) extends Statement 
   override def setFeaturesTrue {
     label.setFeaturesTrue
     condition.setFeaturesTrue
+    this.feature = de.fosd.typechef.featureexpr.True
     thenBranch.setFeaturesTrue
     elseBranch.setFeaturesTrue
   }

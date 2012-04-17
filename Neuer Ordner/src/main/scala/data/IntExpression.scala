@@ -6,7 +6,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:07
  * To change this template use File | Settings | File Templates.
@@ -34,15 +34,4 @@ class IntExpression(a: String) extends Expression {
 
   override def printKillGen:String = getLabel+""
 
-  /*
-  override def equals(x:Any):Boolean = {
-    x match{
-      case x:IntExpression =>
-        return this.name.equals(x.name)
-
-      case _ =>
-        return false
-    }
-  }
-  */
 }

@@ -1,11 +1,12 @@
 package data
 
 import de.fosd.typechef.conditional.{One, Conditional, Opt}
-import de.fosd.typechef.featureexpr.FeatureExpr
+import de.fosd.typechef.featureexpr.{If, FeatureExpr}
+import java.util.ArrayList
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:12
  * To change this template use File | Settings | File Templates.
@@ -17,105 +18,59 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
 
 
   def calculateFlowGraph(){
-    var oldStm:AbstractSyntaxTree = null
-    var oldDefStmElse:Opt[AbstractSyntaxTree] = null    //zwei old Opt Knoten für then/else branch
-    var oldDefStmThen:Opt[AbstractSyntaxTree] = null
     setInitNodes(calculateInitNodes)
     setExitNodes(calculateExitNodes)
-    for(stm:Opt[AbstractSyntaxTree]<-stmList){
-      stm match{
-        case  de.fosd.typechef.conditional.Opt(feature,entry) =>
-          feature match{
-            case de.fosd.typechef.featureexpr.True => {
-              stm.entry.calculateFlowGraph()
-               if(oldStm!=null && flowPossible(stm.entry)){//} && oldDefStmThen == null && oldDefStm == null){
-                 if(oldStm.getExitNodes.isEmpty)
-                    addFlow(oldStm,stm.entry)
-                 for(node<-oldStm.getExitNodes)
-                    addFlow(node,stm.entry)
-               }
-               oldStm = stm.entry
-               addSubFlow(stm.entry.getFlow)
-               if(oldDefStmThen!=null){
-                 addFlow(oldDefStmThen.entry,stm.entry)                    //Kante vom letzten Knoten des Opt-thenBranchs zum nächsten normalen Knoten
-                 oldDefStmThen = null
-               }
-               if(oldDefStmElse!=null){
-                 addFlow(oldDefStmElse.entry, stm.entry)
-                 oldDefStmElse = null
-               }
-              /*
-               if(oldDefStm!=null){
-                 addFlow(oldDefStm.entry, stm.entry.getLabel)
-                 oldDefStm = null
-               }
-               */
-            }
-            case _ =>  {     //Optinaler Knoten
-              stm.entry.calculateFlowGraph()
-              addSubFlow(stm.entry.getFlow)
-/*
-              val nextNodeWithSameFeature = getNodeByFeature(stm.entry)
-              val nextNodeWithContradictionFeature = getNodeByContraFeature(stm.entry)
-              if(nextNodeWithSameFeature!=null){
-                addFlow(stm.entry, nextNodeWithSameFeature)
-              }
-              if((oldDefStmThen != null && oldDefStmThen.feature.and(stm.feature).isSatisfiable())){      //Wenn es einen alten Opt Knoten gab und er das selbe feature hat, dann packe ihn auf den flußgraph
-                addFlow(oldDefStmThen.entry,stm.entry)
-                if(nextNodeWithContradictionFeature!=null){
-                  addFlow(oldDefStmThen.entry, nextNodeWithContradictionFeature)
-                }
-              }else{                                                        //Falls nicht, kann es eine Kante vom letzten nicht Opt Knoten zum Opt Knoten geben
-                if(oldStm != null)
-                  addFlow(oldStm, stm.entry)
-              }
-              if(oldDefStmElse != null && oldDefStmElse.feature.and(stm.feature).isSatisfiable())           //ElseBranch
-                addFlow(oldDefStmElse.entry, stm.entry)
-              if(oldDefStmThen != null && !oldDefStmThen.feature.and(stm.feature).isSatisfiable()){
-                oldDefStmElse = stm
-              }else{
-                oldDefStmThen = stm
-              }
-              addSubFlow(stm.entry.getFlow)
-*/
-              if(oldStm != null && oldStm.feature.and(stm.feature).isSatisfiable()){
-                if(flowPossible(stm.entry)){
-                  var foundOtherPath:Boolean = false
-                  for((x,y)<-flow){
-                    if(x.equals(oldStm) && y.feature.equals(stm.entry.feature))
-                      foundOtherPath=true
-                  }
-                if(!foundOtherPath)
-                  addFlow(oldStm, stm.entry)
-                }else
-                  oldStm = null
-              }
-              var nextNodeWithSameFeature = getNodeByFeature(stm.entry)
-              if(nextNodeWithSameFeature != null){
-                addFlow(stm.entry, nextNodeWithSameFeature)       //Kante zum nächsten Knoten mit dem selben Feature
-              }
-              val next = nextStm(stm.entry)
-              if(next != null){
-                if(next.getLabel.feature.equivalentTo(stm.entry.getLabel.feature)){                                 //Kante zum nächsten Knoten, falls er das selbe Feature hat (redundant ? )
-                  addFlow(stm.entry, next)
-                }else{
-                  if(next.getLabel.feature.and(stm.entry.getLabel.feature).isSatisfiable){                         //Kante zum nächsten Knoten, falls er erfüllbar ist
-                    addFlow(stm.entry, next)
-                    val tempNode = getNodeByContraFeature(next.getLabel)
-                    if(tempNode != null)                                                                             //Kante zum nächsten Knoten, falls er ein gegensätzliches Feature zum erfüllbaren Knoten hat (if/else)
-                      addFlow(stm.entry, tempNode)
-                  }else{
-                    val tempNode = getSatisfiableNodeByFeature(stm.entry.getLabel)                                   //generelle Kante zum nächsten überhaupt erfüllbaren Knoten
-                    if(tempNode != null)
-                      addFlow(stm.entry, tempNode)
-                  }
-                }
-              }
+    var actualFeature:FeatureExpr = null
+    var remaining:List[Opt[AbstractSyntaxTree]]  = null
+    var tmp:AbstractSyntaxTree = null
+    for(stm:Opt[AbstractSyntaxTree] <- stmList){
+      remaining = stmList.dropWhile(!_.equals(stm)).tail
+      tmp = stm.entry
+      tmp match{
+        case tmp : Program =>
+          tmp.calculateFlowGraph()
+          addSubFlow(tmp.getFlow)
+          for(exit:AbstractSyntaxTree <- tmp.getExitNodes){
+            findEdges(exit, remaining)
+          }
+        case tmp : Ifelse =>
+          tmp.calculateFlowGraph()
+          addSubFlow(tmp.getFlow)
+          for(exit:AbstractSyntaxTree <- tmp.getExitNodes){
+            findEdges(exit, remaining)
+          }
+        case tmp : WhileStatement =>
+          tmp.calculateFlowGraph()
+          addSubFlow(tmp.getFlow)
+          for(exit:AbstractSyntaxTree <- tmp.getExitNodes){
+            findEdges(exit, remaining)
+          }
+        case tmp : Assignment =>
+          findEdges(stm.entry, remaining)
+      }
+
+
+
+    }
+  }
+
+  def findEdges(stm:AbstractSyntaxTree, liste:List[Opt[AbstractSyntaxTree]]){
+    if(liste==null)
+      return
+    var edgesByFeature:Set[FeatureExpr] = Set.empty
+      for(stmSearch:Opt[AbstractSyntaxTree] <- liste){
+          if(stmSearch.feature.equivalentTo(stm.feature)){    //Äquivalentes Feature
+            addFlow(stm,stmSearch.entry)
+            return
+          }else{
+            if(stmSearch.feature.and(stm.feature).isSatisfiable() && !edgesByFeature.contains(stmSearch.feature)){   //nicht Äquivalent, aber erfüllbar
+               addFlow(stm,stmSearch.entry)
+               edgesByFeature += stmSearch.feature
             }
           }
       }
-    }
   }
+
 
   def nextStm(from:AbstractSyntaxTree):AbstractSyntaxTree = {
     var iterator = stmList.iterator
@@ -294,12 +249,14 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
    * Beim initialen Aufruf der Methode darf feature null sein, da es nicht benutzt wird.
    */
   override def setFeatures(feature:FeatureExpr) {
+    this.feature = feature
     for(stm<-stmList){
       stm.entry.setFeatures(stm.feature)
     }
   }
 
   override def setFeaturesTrue {
+    this.feature = de.fosd.typechef.featureexpr.True
     for(stm <- stmList)
       stm.entry.setFeaturesTrue
   }
@@ -348,16 +305,8 @@ class Program(b: List[Opt[AbstractSyntaxTree]]) extends AbstractSyntaxTree {
       var newFlow:Set[(AbstractSyntaxTree,AbstractSyntaxTree)] = Set.empty
       var filter:List[AbstractSyntaxTree] = generateFilterFlow(toFilter)
       for((from,to)<-flow){
-//        val allPathsFrom:Set[(AbstractSyntaxTree,AbstractSyntaxTree)]
         if(filter.contains(from.getLabel) && filter.contains(to.getLabel))
           newFlow+=((from,to))
-//          for((from2,to2)<-flow){
-//            if(filter.contains(to2) && from.equals(from2))
-//              allPathsFrom+=((from2,to2))
-//          }
-       // val naechsteNode:AbstractSyntaxTree = nextNodeSimple(from, flow)//getNodeByFeature(from)            //TODO ÜBER DEN FLUßGRAPHEN ITERIEREN UND DIE NÄCHSTE!! ERFÜLLBARE NODE FÜR FROM FINDEN   METHODE getNodeByFeature ist unbrauchbar !!!
-        //if(naechsteNode != null && naechsteNode.equals(to))
-        //    newFlow+=((from,to))
       }
       flow=newFlow
     }

@@ -5,7 +5,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr
 
 /**
  * Created by IntelliJ IDEA.
- * User: Familie
+ * User:
  * Date: 03.10.11
  * Time: 17:00
  * To change this template use File | Settings | File Templates.
@@ -50,7 +50,7 @@ abstract class Condition() extends Statement {
           //aeExitIntersection= from.calculateAEexit(prog) & aeExitIntersection
           aeExitIntersectionTmpOne = from.getLabel.calculateAEexit(prog)
           var tmpSet:Set[AbstractSyntaxTree]=Set.empty
-          for(tmp1 <-aeExitIntersectionTmpOne)                                     //equals selber simulieren, da ich auf textuelle Gleichheit prüfen muß
+          for(tmp1 <-aeExitIntersectionTmpOne)
             for(tmp2 <-aeExitIntersection){
               if(tmp1.toString.equals(tmp2.toString)){
                 tmpSet+=tmp1
