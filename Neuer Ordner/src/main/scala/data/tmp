@@ -96,6 +96,19 @@ class TestRunner {
 
     import org.junit.Test
 
+    @Test
+    def run0 {
+    var counter:Int = 0;
+      while(counter<100){
+        var gen:Generator = new Generator(10,10,10,10)
+        var code:String = """begin{ """ + gen.generateProgramm("A",1) +  """ }
+        end
+        """
+        var prog:Program = runTest(code)
+        automaticTest(code)
+        counter += 1
+      }
+    }
 
     @Test
     def run1 {
